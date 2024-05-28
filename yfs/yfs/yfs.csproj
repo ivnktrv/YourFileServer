@@ -1,0 +1,22 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>net8.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="System.Data.SQLite" Version="1.0.118" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\..\yfs_client\yfs_client.csproj" />
+    <ProjectReference Include="..\..\yfs_db\yfs_db.csproj" />
+    <ProjectReference Include="..\..\yfs_io\yfs_io.csproj" />
+    <ProjectReference Include="..\..\yfs_net\yfs_net.csproj" />
+    <ProjectReference Include="..\..\yfs_server\yfs_server.csproj" />
+  </ItemGroup>
+
+</Project>

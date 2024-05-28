@@ -1,0 +1,17 @@
+D:\MYCSHARP\YourFileServer\yfs_client\bin\Debug\net8.0\yfs_client.deps.json
+D:\MYCSHARP\YourFileServer\yfs_client\bin\Debug\net8.0\yfs_client.dll
+D:\MYCSHARP\YourFileServer\yfs_client\bin\Debug\net8.0\yfs_client.pdb
+D:\MYCSHARP\YourFileServer\yfs_client\bin\Debug\net8.0\yfs_io.dll
+D:\MYCSHARP\YourFileServer\yfs_client\bin\Debug\net8.0\yfs_net.dll
+D:\MYCSHARP\YourFileServer\yfs_client\bin\Debug\net8.0\yfs_io.pdb
+D:\MYCSHARP\YourFileServer\yfs_client\bin\Debug\net8.0\yfs_net.pdb
+D:\MYCSHARP\YourFileServer\yfs_client\obj\Debug\net8.0\yfs_client.csproj.AssemblyReference.cache
+D:\MYCSHARP\YourFileServer\yfs_client\obj\Debug\net8.0\yfs_client.GeneratedMSBuildEditorConfig.editorconfig
+D:\MYCSHARP\YourFileServer\yfs_client\obj\Debug\net8.0\yfs_client.AssemblyInfoInputs.cache
+D:\MYCSHARP\YourFileServer\yfs_client\obj\Debug\net8.0\yfs_client.AssemblyInfo.cs
+D:\MYCSHARP\YourFileServer\yfs_client\obj\Debug\net8.0\yfs_client.csproj.CoreCompileInputs.cache
+D:\MYCSHARP\YourFileServer\yfs_client\obj\Debug\net8.0\yfs_client.csproj.Up2Date
+D:\MYCSHARP\YourFileServer\yfs_client\obj\Debug\net8.0\yfs_client.dll
+D:\MYCSHARP\YourFileServer\yfs_client\obj\Debug\net8.0\refint\yfs_client.dll
+D:\MYCSHARP\YourFileServer\yfs_client\obj\Debug\net8.0\yfs_client.pdb
+D:\MYCSHARP\YourFileServer\yfs_client\obj\Debug\net8.0\ref\yfs_client.dll
