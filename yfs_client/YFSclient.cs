@@ -27,12 +27,13 @@ public class YFSclient
             Console.Write("""
                 1 - скачать файл
                 2 - загрузить файл
-                3 - список файлов
+                3 - удалить файл
+                4 - список файлов
 
                 -> 
                 """);
             ConsoleKeyInfo key = Console.ReadKey();
-            if (key.Key == ConsoleKey.NumPad3 || key.Key == ConsoleKey.D3)
+            if (key.Key == ConsoleKey.NumPad4 || key.Key == ConsoleKey.D4)
             {
                 string com = "list";
                 byte[] buff = Encoding.UTF8.GetBytes(com);
@@ -90,6 +91,22 @@ public class YFSclient
                 Console.WriteLine("[...] Идёт скачивание");
                 io.downloadFile(socket, getPath);
                 
+            }
+
+            else if (key.Key == ConsoleKey.NumPad3 || key.Key == ConsoleKey.D3)
+            {
+                string com = "delete";
+                byte[] buff = Encoding.UTF8.GetBytes(com);
+                byte[] buffLength = { (byte)buff.Length };
+                socket.Send(buffLength);
+                socket.Send(buff);
+
+                Console.Write("Какой файл удалить?: ");
+                string delFile = Console.ReadLine();
+                byte[] b = Encoding.UTF8.GetBytes(delFile);
+                byte[] getBlength = { (byte)b.Length };
+                socket.Send(getBlength);
+                socket.Send(b);
             }
         }
     }

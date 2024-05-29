@@ -64,7 +64,12 @@ public class YFSserver
 
             else if (cmd == "delete")
             {
+                byte[] getArrSize = new byte[1];
+                connClient.Receive(getArrSize);
+                byte[] getDelFile = new byte[getArrSize[0]];
+                connClient.Receive(getDelFile);
 
+                File.Delete($"{setDir}{Encoding.UTF8.GetString(getDelFile)}");
             }
         }
     }
