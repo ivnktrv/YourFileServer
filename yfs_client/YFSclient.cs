@@ -29,10 +29,13 @@ public class YFSclient
                 2 - загрузить файл
                 3 - удалить файл
                 4 - список файлов
+                5 - Перейти в каталог
 
                 -> 
                 """);
+
             ConsoleKeyInfo key = Console.ReadKey();
+
             if (key.Key == ConsoleKey.NumPad4 || key.Key == ConsoleKey.D4)
             {
                 string com = "list";
@@ -52,6 +55,7 @@ public class YFSclient
                 }
                 Console.ReadKey();
             }
+            
             else if (key.Key == ConsoleKey.NumPad2 || key.Key == ConsoleKey.D2)
             {
                 string com = "upload";
@@ -60,7 +64,7 @@ public class YFSclient
                 socket.Send(buffLength);
                 socket.Send(buff);
 
-                Console.Write("Какой файл загрузить на сервер?: ");
+                Console.Write("\nКакой файл загрузить на сервер?: ");
                 string sendFile = Console.ReadLine();
                 io.uploadFile(socket, sendFile);
             }
@@ -73,7 +77,7 @@ public class YFSclient
                 socket.Send(buffLength);
                 socket.Send(buff);
 
-                Console.Write("Какой файл скачать?: ");
+                Console.Write("\nКакой файл скачать?: ");
                 string downloadFile = Console.ReadLine();
                 byte[] b = Encoding.UTF8.GetBytes(downloadFile);
                 byte[] getBlength = { (byte)b.Length };
@@ -104,6 +108,22 @@ public class YFSclient
                 Console.Write("Какой файл удалить?: ");
                 string delFile = Console.ReadLine();
                 byte[] b = Encoding.UTF8.GetBytes(delFile);
+                byte[] getBlength = { (byte)b.Length };
+                socket.Send(getBlength);
+                socket.Send(b);
+            }
+
+            else if (key.Key == ConsoleKey.NumPad5 || key.Key == ConsoleKey.D5)
+            {
+                string com = "cd";
+                byte[] buff = Encoding.UTF8.GetBytes(com);
+                byte[] buffLength = { (byte)buff.Length };
+                socket.Send(buffLength);
+                socket.Send(buff);
+
+                Console.Write("\nВ какой каталог перейти?: ");
+                string dir = Console.ReadLine();
+                byte[] b = Encoding.UTF8.GetBytes(dir);
                 byte[] getBlength = { (byte)b.Length };
                 socket.Send(getBlength);
                 socket.Send(b);

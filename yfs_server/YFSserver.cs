@@ -9,15 +9,18 @@ public class YFSserver
 {
     YFSnet net = new();
     YFSio io = new();
-
+    
+    private string rootDir;
     private string setDir;
 
     public void run()
     {
         Console.Write("\nКакую папку выделить для сервера?: ");
-        setDir = Console.ReadLine();
+        rootDir = Console.ReadLine();
         Console.Write("Укажите порт: ");
         int port = int.Parse(Console.ReadLine());
+
+        setDir = rootDir;
 
         Console.Clear();
         Console.WriteLine("\x1b[3J");
@@ -59,7 +62,7 @@ public class YFSserver
                 connClient.Receive(getB);
                 string getFileName = Encoding.UTF8.GetString(getB);
 
-                io.uploadFile(connClient, $"{setDir}{getFileName}");
+                io.uploadFile(connClient, getFileName, folder: setDir);
             }
 
             else if (cmd == "delete")
@@ -70,6 +73,20 @@ public class YFSserver
                 connClient.Receive(getDelFile);
 
                 File.Delete($"{setDir}{Encoding.UTF8.GetString(getDelFile)}");
+            }
+        
+            else if (cmd == "cd")
+            {
+                byte[] getArrSize = new byte[1];
+                connClient.Receive(getArrSize);
+                byte[] getB = new byte[getArrSize[0]];
+                connClient.Receive(getB);
+                string getDir = Encoding.UTF8.GetString(getB);
+
+                if (getDir == "/")
+                    setDir = rootDir;
+                else
+                    setDir = getDir;
             }
         }
     }

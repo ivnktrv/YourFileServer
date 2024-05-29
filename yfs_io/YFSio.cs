@@ -18,7 +18,7 @@ public class YFSio
         string[] files = Directory.GetFiles(dirName);
         foreach (string getFiles in files)
         {
-            dirsAndFiles.Add($"\n{getFiles}");
+            dirsAndFiles.Add($"\n{Path.GetFileName(getFiles)}");
         }
 
         dirsAndFiles.Add("\n\n:END_OF_LIST"); // end of list
@@ -26,9 +26,15 @@ public class YFSio
         return dirsAndFiles.ToArray();
     }
 
-    public void uploadFile(Socket __socket, string file)
+    public void uploadFile(Socket __socket, string file, string? folder = null)
     {
-        using BinaryReader br = new(File.Open(file, FileMode.Open));
+        BinaryReader br;
+
+        if (folder == null)
+            br = new(File.Open(file, FileMode.Open));
+        else
+            br = new(File.Open($"{folder}/{file}", FileMode.Open));
+
         br.BaseStream.Position = 0;
 
         byte[] getFileName = Encoding.UTF8.GetBytes(file);
@@ -46,6 +52,7 @@ public class YFSio
             byte[] readByte = {br.ReadByte()};
             __socket.Send(readByte);
         }
+        br.Close();
         //__socket.Send(Encoding.UTF8.GetBytes(":EOF")); // end of file
     }
 
