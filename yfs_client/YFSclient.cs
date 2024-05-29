@@ -105,7 +105,7 @@ public class YFSclient
                 socket.Send(buffLength);
                 socket.Send(buff);
 
-                Console.Write("Какой файл удалить?: ");
+                Console.Write("\nКакой файл удалить?: ");
                 string delFile = Console.ReadLine();
                 byte[] b = Encoding.UTF8.GetBytes(delFile);
                 byte[] getBlength = { (byte)b.Length };
