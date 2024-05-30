@@ -22,71 +22,80 @@ public class YFSserver
 
         setDir = rootDir;
 
-        Console.Clear();
-        Console.WriteLine("\x1b[3J");
+        io.clearTerminal();
+
         Console.WriteLine($"##### IP: {net.getIP()}, ПОРТ: {port} #####\n");
-
-        Socket socket = net.createServer(port);
-        Socket connClient = socket.Accept();
-
-        Console.WriteLine($"[i] Подключён клиент (IP: {connClient.RemoteEndPoint})");
 
         while (true)
         {
-            byte[] getBuffLength = new byte[1];
-            connClient.Receive(getBuffLength);
-            byte[] buff = new byte[getBuffLength[0]];
-            connClient.Receive(buff);
-            string cmd = Encoding.UTF8.GetString(buff);
+            Socket socket = net.createServer(port);
+            Socket connClient = socket.Accept();
 
-            if (cmd == "list")
+            Console.WriteLine($"[i] Подключён клиент (IP: {connClient.RemoteEndPoint})");
+
+            while (true)
             {
-                string[] getDirsAndFiles = io.getFiles(setDir);
-                foreach (string items in getDirsAndFiles)
+                byte[] getCommand = net.getData(connClient);
+                string cmd = Encoding.UTF8.GetString(getCommand);
+
+                if (cmd == "list")
                 {
-                    byte[] b = Encoding.UTF8.GetBytes(items);
-                    connClient.Send(b);
+                    string[] getDirsAndFiles = io.getFiles(setDir);
+                    foreach (string items in getDirsAndFiles)
+                    {
+                        byte[] b = Encoding.UTF8.GetBytes(items);
+                        connClient.Send(b);
+                    }
                 }
-            }
 
-            else if (cmd == "upload")
-            {
-                io.downloadFile(connClient, setDir);
-            }
+                else if (cmd == "upload")
+                {
+                    io.downloadFile(connClient, setDir);
+                }
 
-            else if (cmd == "download")
-            {
-                byte[] getArrSize = new byte[1];
-                connClient.Receive(getArrSize);
-                byte[] getB = new byte[getArrSize[0]];
-                connClient.Receive(getB);
-                string getFileName = Encoding.UTF8.GetString(getB);
+                else if (cmd == "download")
+                {
+                    byte[] getFileName_bytes = net.getData(connClient);
+                    string getFileName = Encoding.UTF8.GetString(getFileName_bytes);
 
-                io.uploadFile(connClient, getFileName, folder: setDir);
-            }
+                    try
+                    {
+                        io.uploadFile(connClient, getFileName, folder: setDir);
+                    }
+                    catch (SocketException)
+                    {
+                        Console.WriteLine($"[i] Клиент {connClient.RemoteEndPoint} отключился. Жду нового клиента");
+                        connClient.Close();
+                        socket.Close();
+                        break;
+                    }
+                }
 
-            else if (cmd == "delete")
-            {
-                byte[] getArrSize = new byte[1];
-                connClient.Receive(getArrSize);
-                byte[] getDelFile = new byte[getArrSize[0]];
-                connClient.Receive(getDelFile);
+                else if (cmd == "delete")
+                {
+                    byte[] getDelFile = net.getData(connClient);
 
-                File.Delete($"{setDir}/{Encoding.UTF8.GetString(getDelFile)}");
-            }
-        
-            else if (cmd == "cd")
-            {
-                byte[] getArrSize = new byte[1];
-                connClient.Receive(getArrSize);
-                byte[] getB = new byte[getArrSize[0]];
-                connClient.Receive(getB);
-                string getDir = Encoding.UTF8.GetString(getB);
+                    File.Delete($"{setDir}/{Encoding.UTF8.GetString(getDelFile)}");
+                }
 
-                if (getDir == "/")
-                    setDir = rootDir;
-                else
-                    setDir = getDir;
+                else if (cmd == "cd")
+                {
+                    byte[] getDir_bytes = net.getData(connClient);
+                    string getDir = Encoding.UTF8.GetString(getDir_bytes);
+
+                    if (getDir == "/")
+                        setDir = rootDir;
+                    else
+                        setDir += "/" + getDir;
+                }
+
+                else if (cmd == "closeconn")
+                {
+                    Console.WriteLine($"[i] Клиент {connClient.RemoteEndPoint} отключился. Жду нового клиента");
+                    connClient.Close();
+                    socket.Close();
+                    break;
+                }
             }
         }
     }
