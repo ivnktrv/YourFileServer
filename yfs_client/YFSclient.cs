@@ -17,117 +17,99 @@ public class YFSclient
         Console.Write("\nУкажите порт: ");
         int port = int.Parse(Console.ReadLine());
 
-        Socket socket = net.createClient(ip, port);
-
-        while (true)
+        try
         {
-            Console.Clear();
-            Console.WriteLine("\x1b[3J");
+            Socket socket = net.createClient(ip, port);
 
-            Console.Write("""
-                1 - скачать файл
-                2 - загрузить файл
-                3 - удалить файл
-                4 - список файлов
-                5 - Перейти в каталог
+            while (true)
+            {
+                Console.Clear();
+                Console.WriteLine("\x1b[3J");
+
+                Console.Write($"""
+                [1] Скачать файл       [2] Загрузить файл
+                [3] Удалить файл       [4] Список файлов
+                [5] Перейти в каталог  [6] Отключиться
 
                 -> 
                 """);
 
-            ConsoleKeyInfo key = Console.ReadKey();
+                ConsoleKeyInfo key = Console.ReadKey();
 
-            if (key.Key == ConsoleKey.NumPad4 || key.Key == ConsoleKey.D4)
-            {
-                string com = "list";
-                byte[] buff = Encoding.UTF8.GetBytes(com);
-                byte[] buffLength = { (byte)buff.Length };
-                socket.Send(buffLength);
-                socket.Send(buff);
-
-                while(true)
+                if (key.Key == ConsoleKey.NumPad1 || key.Key == ConsoleKey.D1)
                 {
-                    byte[] b = new byte[128];
-                    socket.Receive(b);
-                    string s = Encoding.UTF8.GetString(b);
-                    Console.Write(s);
-                    if (s.Contains(":END_OF_LIST"))
-                        break;
+                    net.sendData(socket, "download");
+
+                    Console.Write("\nКакой файл скачать?: ");
+                    string downloadFile = Console.ReadLine();
+
+                    net.sendData(socket, downloadFile);
+
+                    Console.Write("В какую папку сохранить?: ");
+                    string getPath = Console.ReadLine();
+
+                    Console.WriteLine("[...] Идёт скачивание");
+                    io.downloadFile(socket, getPath);
+
                 }
-                Console.ReadKey();
+
+                else if (key.Key == ConsoleKey.NumPad2 || key.Key == ConsoleKey.D2)
+                {
+                    net.sendData(socket, "upload");
+
+                    Console.Write("\nКакой файл загрузить на сервер?: ");
+                    string sendFile = Console.ReadLine();
+
+                    io.uploadFile(socket, sendFile);
+                }
+
+                else if (key.Key == ConsoleKey.NumPad3 || key.Key == ConsoleKey.D3)
+                {
+                    net.sendData(socket, "delete");
+
+                    Console.Write("\nКакой файл удалить?: ");
+                    string delFile = Console.ReadLine();
+
+                    net.sendData(socket, delFile);
+                }
+
+                else if (key.Key == ConsoleKey.NumPad4 || key.Key == ConsoleKey.D4)
+                {
+                    net.sendData(socket, "list");
+
+                    while (true)
+                    {
+                        byte[] b = new byte[512];
+                        socket.Receive(b);
+                        string s = Encoding.UTF8.GetString(b);
+                        Console.Write(s);
+                        if (s.Contains(":END_OF_LIST"))
+                            break;
+                    }
+                    Console.ReadKey();
+                }
+
+                else if (key.Key == ConsoleKey.NumPad5 || key.Key == ConsoleKey.D5)
+                {
+                    net.sendData(socket, "cd");
+
+                    Console.Write("\nВ какой каталог перейти?: ");
+                    string dir = Console.ReadLine();
+
+                    net.sendData(socket, dir);
+                }
+
+                else if (key.Key == ConsoleKey.NumPad6 || key.Key == ConsoleKey.D6)
+                {
+                    net.sendData(socket, "closeconn");
+                    socket.Close();
+                    break;
+                }
             }
-            
-            else if (key.Key == ConsoleKey.NumPad2 || key.Key == ConsoleKey.D2)
-            {
-                string com = "upload";
-                byte[] buff = Encoding.UTF8.GetBytes(com);
-                byte[] buffLength = { (byte)buff.Length };
-                socket.Send(buffLength);
-                socket.Send(buff);
-
-                Console.Write("\nКакой файл загрузить на сервер?: ");
-                string sendFile = Console.ReadLine();
-                io.uploadFile(socket, sendFile);
-            }
-
-            else if (key.Key == ConsoleKey.NumPad1 || key.Key == ConsoleKey.D1)
-            {
-                string com = "download";
-                byte[] buff = Encoding.UTF8.GetBytes(com);
-                byte[] buffLength = { (byte)buff.Length };
-                socket.Send(buffLength);
-                socket.Send(buff);
-
-                Console.Write("\nКакой файл скачать?: ");
-                string downloadFile = Console.ReadLine();
-                byte[] b = Encoding.UTF8.GetBytes(downloadFile);
-                byte[] getBlength = { (byte)b.Length };
-                socket.Send(getBlength);
-                socket.Send(b);
-                
-                Console.Write("В какую папку сохранить?: ");
-                string getPath = Console.ReadLine();
-                /*
-                byte[] bb = Encoding.UTF8.GetBytes(downloadFile);
-                byte[] getPathArrLength = { (byte)bb.Length };
-                socket.Send(getPathArrLength);
-                socket.Send(bb);
-                */
-                Console.WriteLine("[...] Идёт скачивание");
-                io.downloadFile(socket, getPath);
-                
-            }
-
-            else if (key.Key == ConsoleKey.NumPad3 || key.Key == ConsoleKey.D3)
-            {
-                string com = "delete";
-                byte[] buff = Encoding.UTF8.GetBytes(com);
-                byte[] buffLength = { (byte)buff.Length };
-                socket.Send(buffLength);
-                socket.Send(buff);
-
-                Console.Write("\nКакой файл удалить?: ");
-                string delFile = Console.ReadLine();
-                byte[] b = Encoding.UTF8.GetBytes(delFile);
-                byte[] getBlength = { (byte)b.Length };
-                socket.Send(getBlength);
-                socket.Send(b);
-            }
-
-            else if (key.Key == ConsoleKey.NumPad5 || key.Key == ConsoleKey.D5)
-            {
-                string com = "cd";
-                byte[] buff = Encoding.UTF8.GetBytes(com);
-                byte[] buffLength = { (byte)buff.Length };
-                socket.Send(buffLength);
-                socket.Send(buff);
-
-                Console.Write("\nВ какой каталог перейти?: ");
-                string dir = Console.ReadLine();
-                byte[] b = Encoding.UTF8.GetBytes(dir);
-                byte[] getBlength = { (byte)b.Length };
-                socket.Send(getBlength);
-                socket.Send(b);
-            }
+        }
+         catch (SocketException)
+        {
+            Console.WriteLine("[-] Сервер отвёрг запрос на подключение");
         }
     }
 }
