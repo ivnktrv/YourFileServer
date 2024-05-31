@@ -8,20 +8,35 @@ public class YFSnet
 {
     public string getIP()
     {
+        var getIPs = new List<string>();
         var host = Dns.GetHostEntry(Dns.GetHostName());
+
         foreach (var ip in host.AddressList)
         {
             if (ip.AddressFamily == AddressFamily.InterNetwork)
             {
-                return ip.ToString();
+                getIPs.Add(ip.ToString());
             }
         }
-        throw new Exception("Отсутствуют адаптары");
+        string[] ips = getIPs.ToArray();
+
+        Console.WriteLine("##### СПИСОК IP #####\n");
+        for (int i = 0; i < ips.Length; i++)
+        {
+            Console.WriteLine($"[{i}] {ips[i]}");
+        }
+        Console.Write("\nКакой IP выбрать?: ");
+        ConsoleKeyInfo key = Console.ReadKey();
+        Console.Clear();
+        Console.WriteLine("\x1b[3J");
+        Console.WriteLine($"[i] Выбран IP: {ips[int.Parse(key.KeyChar.ToString())]}");
+
+        return ips[int.Parse(key.KeyChar.ToString())];
     }
 
-    public Socket createServer(int port)
+    public Socket createServer(string ip, int port)
     {
-        IPEndPoint ipPoint = new IPEndPoint(IPAddress.Parse(getIP()), port);
+        IPEndPoint ipPoint = new IPEndPoint(IPAddress.Parse(ip), port);
         Socket __socket = new(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp);
         __socket.Bind(ipPoint);
         __socket.Listen();
