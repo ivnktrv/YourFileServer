@@ -9,21 +9,30 @@ public class YFSio
     {
         List<string> dirsAndFiles = [];
 
-        string[] dirs = Directory.GetDirectories(dirName);
-        foreach (string getDirs in dirs)
+        try
         {
-            dirsAndFiles.Add($"\n{getDirs}");
-        }
+            string[] dirs = Directory.GetDirectories(dirName);
+            foreach (string getDirs in dirs)
+            {
+                dirsAndFiles.Add($"\n{getDirs}");
+            }
 
-        string[] files = Directory.GetFiles(dirName);
-        foreach (string getFiles in files)
+            string[] files = Directory.GetFiles(dirName);
+            foreach (string getFiles in files)
+            {
+                dirsAndFiles.Add($"\n{Path.GetFileName(getFiles)}");
+            }
+
+            dirsAndFiles.Add("\n\n:END_OF_LIST"); // end of list
+
+            return dirsAndFiles.ToArray();
+        }
+        catch (DirectoryNotFoundException)
         {
-            dirsAndFiles.Add($"\n{Path.GetFileName(getFiles)}");
+            Console.WriteLine($"[-] Папка не найдена: {dirName}");
+            string[] dirNotFound = { $"\nПапки {dirName} не существует\n\n:END_OF_LIST" };
+            return dirNotFound;
         }
-
-        dirsAndFiles.Add("\n\n:END_OF_LIST"); // end of list
-
-        return dirsAndFiles.ToArray();
     }
 
     public void uploadFile(Socket __socket, string file, string? folder = null)
@@ -85,7 +94,7 @@ public class YFSio
         byte[] getFileLength = new byte[getFileArrayLength[0]];
         __socket.Receive(getFileLength);
 
-        using BinaryWriter br = new(File.Open($"{saveFolder}/{Encoding.UTF8.GetString(getFileName)}", FileMode.OpenOrCreate));
+        using BinaryWriter br = new(File.Open($"{saveFolder}/{Path.GetFileName(Encoding.UTF8.GetString(getFileName))}", FileMode.OpenOrCreate));
         long fLength = BitConverter.ToInt64(getFileLength);
 
         while (br.BaseStream.Position != fLength)
