@@ -1,20 +1,21 @@
 ﻿using System.Net.Sockets;
 using System.Text;
-using yfs_io;
 using yfs_net;
+using yfs_io;
 
 namespace yfs_client;
 
 public class YFSclient
 {
-    YFSio io = new();
+    YFSio  io  = new();
     YFSnet net = new();
 
     public void run()
     {
-        Console.Write("\nУкажите ip: ");
+        io.clearTerminal();
+        Console.Write("Укажите IP: ");
         string ip = Console.ReadLine();
-        Console.Write("\nУкажите порт: ");
+        Console.Write("Укажите порт: ");
         int port = int.Parse(Console.ReadLine());
 
         try
@@ -48,7 +49,7 @@ public class YFSclient
                     Console.Write("В какую папку сохранить?: ");
                     string getPath = Console.ReadLine();
 
-                    Console.WriteLine("[...] Идёт скачивание");
+                    Console.WriteLine("\n[...] Идёт скачивание");
                     io.downloadFile(socket, getPath);
 
                 }
@@ -60,6 +61,7 @@ public class YFSclient
                     Console.Write("\nКакой файл загрузить на сервер?: ");
                     string sendFile = Console.ReadLine();
 
+                    Console.WriteLine($"\n[...] Отправка файла: {sendFile}");
                     io.uploadFile(socket, sendFile);
                 }
 
