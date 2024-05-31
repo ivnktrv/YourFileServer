@@ -1,34 +1,36 @@
 ﻿using System.Net.Sockets;
+using System.Text;
 using yfs_net;
 using yfs_io;
-using System.Text;
 
 namespace yfs_server;
 
 public class YFSserver
 {
     YFSnet net = new();
-    YFSio io = new();
+    YFSio  io  = new();
     
     private string rootDir;
     private string setDir;
+    private string setIP;
 
     public void run()
     {
-        Console.Write("\nКакую папку выделить для сервера?: ");
+        io.clearTerminal();
+        Console.Write("Какую папку выделить для сервера?: ");
         rootDir = Console.ReadLine();
         Console.Write("Укажите порт: ");
         int port = int.Parse(Console.ReadLine());
 
         setDir = rootDir;
-
         io.clearTerminal();
 
-        Console.WriteLine($"##### IP: {net.getIP()}, ПОРТ: {port} #####\n");
-
+        setIP = net.getIP();
+        Console.WriteLine($"[i] Ожидаю подключения\n");
+        
         while (true)
         {
-            Socket socket = net.createServer(port);
+            Socket socket = net.createServer(setIP, port);
             Socket connClient = socket.Accept();
 
             Console.WriteLine($"[i] Подключён клиент (IP: {connClient.RemoteEndPoint})");
