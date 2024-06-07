@@ -1,4 +1,5 @@
 ﻿using System.Net.Sockets;
+using yfs_security;
 using System.Text;
 using yfs_net;
 using yfs_io;
@@ -9,6 +10,7 @@ public class YFSclient
 {
     YFSio  io  = new();
     YFSnet net = new();
+    YFSsec sec = new();
 
     public void run()
     {
@@ -21,6 +23,18 @@ public class YFSclient
         try
         {
             Socket socket = net.createClient(ip, port);
+            sec.sendAuthData(socket);
+
+            byte[] getAnswer = new byte[1];
+            socket.Receive(getAnswer);
+
+            if (getAnswer[0] == 1) { }
+            else
+            {
+                Console.WriteLine("[-] Логин или пароль неверный");
+                socket.Close();
+                return;
+            }
 
             while (true)
             {

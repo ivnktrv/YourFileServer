@@ -8,8 +8,6 @@
 
   <ItemGroup>
     <ProjectReference Include="..\yfs_io\yfs_io.csproj" />
-    <ProjectReference Include="..\yfs_net\yfs_net.csproj" />
-    <ProjectReference Include="..\yfs_security\yfs_security.csproj" />
   </ItemGroup>
 
 </Project>

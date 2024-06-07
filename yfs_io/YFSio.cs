@@ -94,7 +94,8 @@ public class YFSio
         byte[] getFileLength = new byte[getFileArrayLength[0]];
         __socket.Receive(getFileLength);
 
-        using BinaryWriter br = new(File.Open($"{saveFolder}/{Path.GetFileName(Encoding.UTF8.GetString(getFileName))}", FileMode.OpenOrCreate));
+        string savePath = $"{saveFolder}/{Path.GetFileName(Encoding.UTF8.GetString(getFileName))}";
+        using BinaryWriter br = new(File.Open(savePath, FileMode.OpenOrCreate));
         long fLength = BitConverter.ToInt64(getFileLength);
 
         while (br.BaseStream.Position != fLength)
