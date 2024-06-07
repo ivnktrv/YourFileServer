@@ -1,4 +1,4 @@
-﻿//using yfs_db;
+﻿using yfs_security;
 using yfs_server;
 using yfs_client;
 
@@ -8,19 +8,9 @@ internal class YFSmain
 {
     static void Main(string[] args)
     {
-        //YFSdb  db  = new();
         YFSserver server = new();
         YFSclient client = new();
-        /*
-        db.requestToDB("""
-        CREATE TABLE IF NOT EXISTS hostInfo (
-            hostname TEXT,
-            ip TEXT
-        )
-        """);
-        db.requestToDB("SELECT ");
-        db.requestToDB($"INSERT INTO hostInfo VALUES ('{Dns.GetHostName()}', '{net.getIP()}')");
-        */
+        YFSsec sec = new();
 
         Console.Write("""
               _____
@@ -31,9 +21,9 @@ internal class YFSmain
             /_______/|  |  || | || \_/ || /  | |   | || || |_ ___/ || |_ | /    \  /  | |_ | /
             |____::| |  |__|\___/ \___/ |_|  |_|   |_||_|\___||___/ \___||_|     \/   \___||_|
             |"_____|/
-                                                  BETA 0.4
+                                               VER 1.0 (07062024)
 
-                             [1] Создать сервер     [2] Подключиться к серверу
+              [1] Создать сервер    [2] Подключиться к серверу    [3] Создать файл авторизации
             
             -> 
             """);
@@ -46,6 +36,10 @@ internal class YFSmain
         else if (key.Key == ConsoleKey.NumPad2 || key.Key == ConsoleKey.D2)
         {
             client.run();
+        }
+        else if (key.Key == ConsoleKey.NumPad3 || key.Key == ConsoleKey.D3)
+        {
+            sec.createAuthFile();
         }
     }
 }
