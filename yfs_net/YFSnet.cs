@@ -8,10 +8,10 @@ public class YFSnet
 {
     public string getIP()
     {
-        var getIPs = new List<string>();
-        var host = Dns.GetHostEntry(Dns.GetHostName());
+        List<string> getIPs = new List<string>();
+        IPHostEntry host = Dns.GetHostEntry(Dns.GetHostName());
 
-        foreach (var ip in host.AddressList)
+        foreach (IPAddress ip in host.AddressList)
         {
             if (ip.AddressFamily == AddressFamily.InterNetwork)
             {
