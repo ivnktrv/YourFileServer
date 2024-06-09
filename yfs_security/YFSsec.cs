@@ -22,17 +22,13 @@ public class YFSsec
 
         string login = Encoding.UTF8.GetString(getLogin);
         string passHash = Encoding.UTF8.GetString(getPassHash);
-        string authLogin = File.ReadAllLines("AUTH")[0];
-        string authPasswordHash = File.ReadAllLines("AUTH")[1];
+        string authLogin = File.ReadAllLines($"yfs_{Environment.MachineName}.auth")[0];
+        string authPasswordHash = File.ReadAllLines($"yfs_{Environment.MachineName}.auth")[1];
 
         if (login == authLogin && passHash == authPasswordHash)
-        {
             return true;
-        }
         else
-        {
             return false;
-        }
     }
 
     public void sendAuthData(Socket __socket)
@@ -62,7 +58,7 @@ public class YFSsec
         string pass = Console.ReadLine();
 
         string passHash = genSHA256(pass);
-        using FileStream fs = new("AUTH", FileMode.Create, FileAccess.Write);
+        using FileStream fs = new($"yfs_{Environment.MachineName}.auth", FileMode.Create, FileAccess.Write);
         fs.Write(Encoding.UTF8.GetBytes($"""
             {login}
             {passHash}
@@ -73,6 +69,15 @@ public class YFSsec
     private string genSHA256(string s)
     {
         using SHA256 sha256 = SHA256.Create();
+        byte[] hashBytes = sha256.ComputeHash(Encoding.UTF8.GetBytes(s));
+        string hash = BitConverter.ToString(hashBytes).Replace("-", string.Empty);
+        return hash.ToLower();
+    }
+
+    private string checkSumFileSHA256(string path)
+    {
+        using SHA256 sha256 = SHA256.Create();
+        using BinaryReader br = new(File.ReadAllBytes(path));
         byte[] hashBytes = sha256.ComputeHash(Encoding.UTF8.GetBytes(s));
         string hash = BitConverter.ToString(hashBytes).Replace("-", string.Empty);
         return hash.ToLower();

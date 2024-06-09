@@ -1,4 +1,5 @@
-﻿using System.Net.Sockets;
+﻿using System.Globalization;
+using System.Net.Sockets;
 using System.Text;
 
 namespace yfs_io;
@@ -58,11 +59,18 @@ public class YFSio
             __socket.Send(getFileLength_arrSize);
             __socket.Send(getFileLength);
 
+            long c = 100000;
             while (br.BaseStream.Position != br.BaseStream.Length)
             {
                 //Console.WriteLine($"[UPLOAD] {file} [{br.BaseStream.Position / 1024} кб / {br.BaseStream.Length / 1024} кб]");
                 byte[] readByte = { br.ReadByte() };
                 __socket.Send(readByte);
+                if(br.BaseStream.Position == c)
+                {
+                    clearTerminal();
+                    Console.WriteLine($"[UPLOAD] {file} [{br.BaseStream.Position / 1024} кб / {br.BaseStream.Length / 1024} кб]");
+                    c += 100000;
+                }
             }
             br.Close();
         }
@@ -98,12 +106,18 @@ public class YFSio
         using BinaryWriter br = new(File.Open(savePath, FileMode.OpenOrCreate));
         long fLength = BitConverter.ToInt64(getFileLength);
 
+        long c = 100000;
         while (br.BaseStream.Position != fLength)
         {
-            //Console.WriteLine($"[DOWNLOAD] {Encoding.UTF8.GetString(getFileName)} [{br.BaseStream.Position/1024} кб / {fLength/1024} кб]");
             byte[] wr = new byte[1];
             __socket.Receive(wr);
             br.Write(wr[0]);
+            if (br.BaseStream.Position == c)
+            {
+                clearTerminal();
+                Console.WriteLine($"[DOWNLOAD] {Encoding.UTF8.GetString(getFileName)} [{br.BaseStream.Position / 1024} кб / {fLength / 1024} кб]");
+                c += 100000;
+            }
         }
     }
 

@@ -38,12 +38,12 @@ public class YFSserver
                 Socket connClient = socket.Accept();
 
                 bool auth = sec.checkAuthData(connClient);
-                if (auth)
+                if (auth)             // если логин и пароль верны, отправляем 1 (данные верны)
                 {
                     byte[] a = { 1 };
                     connClient.Send(a);
                 }
-                else
+                else       // иначе: 0 (данные неверны)
                 {
                     byte[] a = { 0 };
                     connClient.Send(a);
