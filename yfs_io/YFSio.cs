@@ -146,10 +146,20 @@ public class YFSio
         if (downloadedFileChecksum != Encoding.UTF8.GetString(getFileChecksum))
         {
             Console.WriteLine($"""
-            [!] Хэши не совпадают
+            [!] Хеши не совпадают
 
-                {downloadedFileChecksum} (скачаный файл) != {Encoding.UTF8.GetString(getFileChecksum)} (файл на сервере)
+                {downloadedFileChecksum} (скачаный файл) ≠ {Encoding.UTF8.GetString(getFileChecksum)} (файл на сервере)
             
+            """);
+            Console.ReadKey();
+        }
+        else
+        {
+            Console.WriteLine($"""
+            [+] Хеши совпадают
+
+                {downloadedFileChecksum} (скачаный файл) = {Encoding.UTF8.GetString(getFileChecksum)} (файл на сервере)
+
             """);
             Console.ReadKey();
         }
