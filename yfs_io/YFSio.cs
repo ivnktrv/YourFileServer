@@ -89,6 +89,34 @@ public class YFSio
                 }
             }
             br.Close();
+            string downloadedFileChecksum = "";
+            if (folder == null)
+                downloadedFileChecksum =  sec.checksumFileSHA256(file);
+            else
+                sec.checksumFileSHA256($"{folder}/{file}");
+
+            Console.WriteLine("[...] Проверка контрольной суммы");
+            if (downloadedFileChecksum != Encoding.UTF8.GetString(getFileChecksum))
+            {
+                Console.WriteLine($"""
+            [!] Хеши не совпадают
+
+                {downloadedFileChecksum} (скачаный файл) ≠ {Encoding.UTF8.GetString(getFileChecksum)} (файл на сервере)
+            
+            [1] Удалить файл  [2] Оставить
+            
+            ->
+            """);
+                ConsoleKeyInfo key = Console.ReadKey();
+
+                if (key.Key == ConsoleKey.NumPad1 || key.Key == ConsoleKey.D1)
+                {
+                    File.Delete();
+                }
+
+                else if (key.Key == ConsoleKey.NumPad2 || key.Key == ConsoleKey.D2) { }
+            }
+            else { }
         }
         catch (FileNotFoundException)
         {
@@ -150,19 +178,20 @@ public class YFSio
 
                 {downloadedFileChecksum} (скачаный файл) ≠ {Encoding.UTF8.GetString(getFileChecksum)} (файл на сервере)
             
+            [1] Удалить файл  [2] Оставить
+            
+            ->
             """);
-            Console.ReadKey();
-        }
-        else
-        {
-            Console.WriteLine($"""
-            [+] Хеши совпадают
+            ConsoleKeyInfo key = Console.ReadKey();
 
-                {downloadedFileChecksum} (скачаный файл) = {Encoding.UTF8.GetString(getFileChecksum)} (файл на сервере)
+            if (key.Key == ConsoleKey.NumPad1 || key.Key == ConsoleKey.D1)
+            {
+                File.Delete(savePath);
+            }
 
-            """);
-            Console.ReadKey();
+            else if (key.Key == ConsoleKey.NumPad2 || key.Key == ConsoleKey.D2) { }
         }
+        else { }
     }
 
     public void clearTerminal()

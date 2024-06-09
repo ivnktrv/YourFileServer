@@ -61,16 +61,6 @@ public class YFSsec
             {login}
             {passHash}
             """));
-
-    }
-
-    private string genSHA256(string s)
-    {
-        using SHA256 sha256 = SHA256.Create();
-        byte[] hashBytes = sha256.ComputeHash(Encoding.UTF8.GetBytes(s));
-        string hash = BitConverter.ToString(hashBytes).Replace("-", string.Empty);
-
-        return hash.ToLower();
     }
 
     public string checksumFileSHA256(string path)
@@ -78,6 +68,15 @@ public class YFSsec
         using SHA256 sha256 = SHA256.Create();
         using FileStream fs = File.OpenRead(path);
         byte[] hashBytes = sha256.ComputeHash(fs);
+        string hash = BitConverter.ToString(hashBytes).Replace("-", string.Empty);
+
+        return hash.ToLower();
+    }
+
+    private string genSHA256(string s)
+    {
+        using SHA256 sha256 = SHA256.Create();
+        byte[] hashBytes = sha256.ComputeHash(Encoding.UTF8.GetBytes(s));
         string hash = BitConverter.ToString(hashBytes).Replace("-", string.Empty);
 
         return hash.ToLower();
