@@ -1,14 +1,11 @@
 ﻿using System.Security.Cryptography;
 using System.Net.Sockets;
 using System.Text;
-using yfs_io;
 
 namespace yfs_security;
 
 public class YFSsec
 {
-    YFSio io = new();
-
     public bool checkAuthData(Socket __socket)
     {
         byte[] getLoginLength = new byte[1];
@@ -50,7 +47,8 @@ public class YFSsec
 
     public void createAuthFile()
     {
-        io.clearTerminal();
+        Console.Clear();
+        Console.WriteLine("\x1b[3J");
         Console.WriteLine("##### СОЗДАНИЕ ФАЙЛА АВТОРИЗАЦИИ #####\n");
         Console.Write("Придумайте логин: ");
         string login = Console.ReadLine();
@@ -71,15 +69,17 @@ public class YFSsec
         using SHA256 sha256 = SHA256.Create();
         byte[] hashBytes = sha256.ComputeHash(Encoding.UTF8.GetBytes(s));
         string hash = BitConverter.ToString(hashBytes).Replace("-", string.Empty);
+
         return hash.ToLower();
     }
 
-    private string checkSumFileSHA256(string path)
+    public string checksumFileSHA256(string path)
     {
         using SHA256 sha256 = SHA256.Create();
-        using BinaryReader br = new(File.ReadAllBytes(path));
-        byte[] hashBytes = sha256.ComputeHash(Encoding.UTF8.GetBytes(s));
+        using FileStream fs = File.OpenRead(path);
+        byte[] hashBytes = sha256.ComputeHash(fs);
         string hash = BitConverter.ToString(hashBytes).Replace("-", string.Empty);
+
         return hash.ToLower();
     }
 }
