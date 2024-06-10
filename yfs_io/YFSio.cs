@@ -52,7 +52,7 @@ public class YFSio
             BinaryReader b = new(File.Open(path, FileMode.Open));
 
             if (isServer)
-                Console.WriteLine($"[{DateTime.Now}] Подготовка к отправке файла {file}");
+                Console.WriteLine($"[{DateTime.Now}] [...] Подготовка к отправке файла {file}");
             
             byte[] getFileName = Encoding.UTF8.GetBytes(file);
             byte[] getFileName_arrLength = { (byte)getFileName.Length };
@@ -71,7 +71,7 @@ public class YFSio
             br.BaseStream.Position = 0;
             
             if (isServer)
-                Console.WriteLine($"[{DateTime.Now}] Файл отправляется: {file}");
+                Console.WriteLine($"[{DateTime.Now}] [...] Файл отправляется: {file}");
 
             long c = 100000;
             while (br.BaseStream.Position != br.BaseStream.Length)
