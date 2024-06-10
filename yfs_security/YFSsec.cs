@@ -1,14 +1,11 @@
 ﻿using System.Security.Cryptography;
 using System.Net.Sockets;
 using System.Text;
-using yfs_io;
 
 namespace yfs_security;
 
 public class YFSsec
 {
-    YFSio io = new();
-
     public bool checkAuthData(Socket __socket)
     {
         byte[] getLoginLength = new byte[1];
@@ -22,17 +19,14 @@ public class YFSsec
 
         string login = Encoding.UTF8.GetString(getLogin);
         string passHash = Encoding.UTF8.GetString(getPassHash);
-        string authLogin = File.ReadAllLines("AUTH")[0];
-        string authPasswordHash = File.ReadAllLines("AUTH")[1];
+        string authLogin = File.ReadAllLines($"yfs_{Environment.MachineName}.auth")[0];
+        string authPasswordHash = File.ReadAllLines($"yfs_{Environment.MachineName}.auth")[1];
 
+        Console.WriteLine($"[{DateTime.Now}] [...] Проверяю данные для входа");
         if (login == authLogin && passHash == authPasswordHash)
-        {
             return true;
-        }
         else
-        {
             return false;
-        }
     }
 
     public void sendAuthData(Socket __socket)
@@ -54,7 +48,8 @@ public class YFSsec
 
     public void createAuthFile()
     {
-        io.clearTerminal();
+        Console.Clear();
+        Console.WriteLine("\x1b[3J");
         Console.WriteLine("##### СОЗДАНИЕ ФАЙЛА АВТОРИЗАЦИИ #####\n");
         Console.Write("Придумайте логин: ");
         string login = Console.ReadLine();
@@ -62,12 +57,21 @@ public class YFSsec
         string pass = Console.ReadLine();
 
         string passHash = genSHA256(pass);
-        using FileStream fs = new("AUTH", FileMode.Create, FileAccess.Write);
+        using FileStream fs = new($"yfs_{Environment.MachineName}.auth", FileMode.Create, FileAccess.Write);
         fs.Write(Encoding.UTF8.GetBytes($"""
             {login}
             {passHash}
             """));
+    }
 
+    public string checksumFileSHA256(string path)
+    {
+        using SHA256 sha256 = SHA256.Create();
+        using FileStream fs = File.OpenRead(path);
+        byte[] hashBytes = sha256.ComputeHash(fs);
+        string hash = BitConverter.ToString(hashBytes).Replace("-", string.Empty);
+
+        return hash.ToLower();
     }
 
     private string genSHA256(string s)
@@ -75,6 +79,7 @@ public class YFSsec
         using SHA256 sha256 = SHA256.Create();
         byte[] hashBytes = sha256.ComputeHash(Encoding.UTF8.GetBytes(s));
         string hash = BitConverter.ToString(hashBytes).Replace("-", string.Empty);
+
         return hash.ToLower();
     }
 }

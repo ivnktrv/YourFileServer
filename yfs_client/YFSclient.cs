@@ -31,7 +31,7 @@ public class YFSclient
             if (getAnswer[0] == 1) { }
             else
             {
-                Console.WriteLine("[-] Логин или пароль неверный");
+                Console.WriteLine("\n[-] Логин или пароль неверный");
                 socket.Close();
                 return;
             }
