@@ -29,7 +29,7 @@ public class YFSnet
         ConsoleKeyInfo key = Console.ReadKey();
         Console.Clear();
         Console.WriteLine("\x1b[3J");
-        Console.WriteLine($"[i] Выбран IP: {ips[int.Parse(key.KeyChar.ToString())]}");
+        Console.WriteLine($"[{DateTime.Now}] [i] Выбран IP: {ips[int.Parse(key.KeyChar.ToString())]}");
 
         return ips[int.Parse(key.KeyChar.ToString())];
     }
