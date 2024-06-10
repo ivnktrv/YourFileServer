@@ -22,6 +22,7 @@ public class YFSsec
         string authLogin = File.ReadAllLines($"yfs_{Environment.MachineName}.auth")[0];
         string authPasswordHash = File.ReadAllLines($"yfs_{Environment.MachineName}.auth")[1];
 
+        Console.WriteLine($"[{DateTime.Now}] [...] Проверяю данные для входа");
         if (login == authLogin && passHash == authPasswordHash)
             return true;
         else

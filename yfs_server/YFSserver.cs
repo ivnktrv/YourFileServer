@@ -28,7 +28,7 @@ public class YFSserver
         io.clearTerminal();
 
         setIP = net.getIP();
-        Console.WriteLine($"[i] Ожидаю подключения\n");
+        Console.WriteLine($"[{DateTime.Now}] [i] Ожидаю подключения\n");
 
         while (true)
         {
@@ -53,7 +53,7 @@ public class YFSserver
                 }
 
 
-                Console.WriteLine($"[i] Подключён клиент (IP: {connClient.RemoteEndPoint})");
+                Console.WriteLine($"[{DateTime.Now}] [i] Подключён клиент (IP: {connClient.RemoteEndPoint})");
 
                 while (true)
                 {
@@ -62,6 +62,7 @@ public class YFSserver
 
                     if (cmd == "list")
                     {
+                        Console.WriteLine($"[{DateTime.Now}] [i] Получена команда: отправить список файлов");
                         string[] getDirsAndFiles = io.getFiles(setDir);
                         foreach (string items in getDirsAndFiles)
                         {
@@ -72,17 +73,19 @@ public class YFSserver
 
                     else if (cmd == "upload")
                     {
-                        io.downloadFile(connClient, setDir);
+                        Console.WriteLine($"[{DateTime.Now}] [i] Получена команда: загрузить файл на сервер");
+                        io.downloadFile(connClient, setDir, isServer: true);
                     }
 
                     else if (cmd == "download")
                     {
+                        Console.WriteLine($"[{DateTime.Now}] [i] Получена команда: скачать файл с сервера");
                         byte[] getFileName_bytes = net.getData(connClient);
                         string getFileName = Encoding.UTF8.GetString(getFileName_bytes);
 
                         try
                         {
-                            io.uploadFile(connClient, getFileName, folder: setDir);
+                            io.uploadFile(connClient, getFileName, folder: setDir, isServer: true);
                         }
                         catch (SocketException)
                         {
@@ -95,13 +98,16 @@ public class YFSserver
 
                     else if (cmd == "delete")
                     {
+                        Console.WriteLine($"[{DateTime.Now}] [i] Получена команда: удалить файл с сервера");
                         byte[] getDelFile = net.getData(connClient);
 
                         File.Delete($"{setDir}/{Encoding.UTF8.GetString(getDelFile)}");
+                        Console.WriteLine($"[{DateTime.Now}] [i] Файл удалён: {Encoding.UTF8.GetString(getDelFile)}");
                     }
 
                     else if (cmd == "cd")
                     {
+                        Console.WriteLine($"[{DateTime.Now}] [i] Получена команда: перейти в каталог");
                         byte[] getDir_bytes = net.getData(connClient);
                         string getDir = Encoding.UTF8.GetString(getDir_bytes);
 
@@ -113,7 +119,7 @@ public class YFSserver
 
                     else if (cmd == "closeconn")
                     {
-                        Console.WriteLine($"[i] Клиент {connClient.RemoteEndPoint} отключился. Жду нового клиента");
+                        Console.WriteLine($"[{DateTime.Now}] [i] Клиент {connClient.RemoteEndPoint} отключился. Жду нового клиента");
                         connClient.Close();
                         socket.Close();
                         break;
