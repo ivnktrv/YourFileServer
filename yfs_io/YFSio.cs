@@ -81,15 +81,16 @@ public class YFSio
                 if (br.BaseStream.Position == c && !isServer)
                 {
                     clearTerminal();
-                    Console.WriteLine($"[UPLOAD] {file} [{br.BaseStream.Position / 1024} кб / {br.BaseStream.Length / 1024} кб]");
+                    Console.WriteLine($"[UPLOAD] {Path.GetFileName(path)} [{br.BaseStream.Position / 1024} кб / {br.BaseStream.Length / 1024} кб]");
                     c += 100000;
                 }
+                //br.BaseStream.Position += 1; // НЕ ЗАБЫТЬ УДАЛИТЬ
             }
             br.Close();
 
-            if (isServer)
-                Console.WriteLine($"[{DateTime.Now}] Проверка контрольной суммы");
-            
+            Console.WriteLine(isServer ? $"[{DateTime.Now}] [...] Проверка контрольной суммы"
+            : "[...] Проверка контрольной суммы");
+
             byte[] uploadedFileChecksum = new byte[64];
             __socket.Receive(uploadedFileChecksum);
 
@@ -97,12 +98,12 @@ public class YFSio
             {
                 if (!isServer)
                 {
-                    Console.WriteLine($"""
+                    Console.Write($"""
                     [!] Хеши не совпадают. Возможно, файл при отправки на сервер был повреждён.
 
                     SHA-256:
                         {Encoding.UTF8.GetString(getFileChecksum)} (отправленный файл) 
-                                ≠
+                                        !=
                         {Encoding.UTF8.GetString(uploadedFileChecksum)} (файл на сервере)
             
                     [1] Удалить файл  [2] Оставить
@@ -130,7 +131,7 @@ public class YFSio
 
                     SHA-256:
                         {Encoding.UTF8.GetString(getFileChecksum)} (отправленный файл)
-                                   ≠
+                                        !=
                         {Encoding.UTF8.GetString(uploadedFileChecksum)} (файл на клиенте)
                     
                     """);
@@ -146,7 +147,7 @@ public class YFSio
 
                     SHA-256:
                         {Encoding.UTF8.GetString(getFileChecksum)} (отправленный файл)
-                                    =
+                                        =
                         {Encoding.UTF8.GetString(uploadedFileChecksum)} (файл на клиенте)
                    
                     """);
@@ -211,17 +212,18 @@ public class YFSio
         byte[] downloadedFileChecksum_bytes = Encoding.UTF8.GetBytes(downloadedFileChecksum);
         __socket.Send(downloadedFileChecksum_bytes);
 
-        Console.WriteLine("[...] Проверка контрольной суммы");
+        Console.WriteLine(isServer ? $"[{DateTime.Now}] [...] Проверка контрольной суммы" 
+            : "[...] Проверка контрольной суммы");
         if (downloadedFileChecksum != Encoding.UTF8.GetString(getFileChecksum))
         {
             if (!isServer)
             {
-                Console.WriteLine($"""
+                Console.Write($"""
                 [!] Хеши не совпадают. Возможно, файл при скачивании был повреждён.
 
                 SHA-256:
-                    {downloadedFileChecksum} (скачаный файл) 
-                            ≠
+                    {downloadedFileChecksum} (скачанный файл) 
+                                !=
                     {Encoding.UTF8.GetString(getFileChecksum)} (файл на сервере)
             
                 [1] Удалить файл  [2] Оставить
@@ -243,8 +245,8 @@ public class YFSio
                     [{DateTime.Now}] [-] Хеши не совпадают
 
                     SHA-256:
-                        {downloadedFileChecksum} (скачаный файл)
-                                   ≠
+                        {downloadedFileChecksum} (скачанный файл)
+                                    !=
                         {Encoding.UTF8.GetString(getFileChecksum)} (файл на клиенте)
                     
                     """);
@@ -255,9 +257,13 @@ public class YFSio
                 byte[] getAnswer = new byte[1];
                 __socket.Receive(getAnswer);
 
-                if (getAnswer[0] == 0)
+                if (getAnswer[0] == 1)
+                {
                     File.Delete(savePath);
-                else { }
+                    Console.WriteLine($"[{DateTime.Now}] [+] Клиент решил удалить файл: {savePath}");
+                }
+                else
+                    Console.WriteLine($"[{DateTime.Now}] [+] Клиент решил оставить файл: {savePath}");
             }
         }
         else
@@ -268,8 +274,8 @@ public class YFSio
                 [{DateTime.Now}] [+] Хеши совпадают
 
                 SHA-256:
-                    {downloadedFileChecksum} (скачаный файл)
-                                =
+                    {downloadedFileChecksum} (скачанный файл)
+                                    =
                     {Encoding.UTF8.GetString(getFileChecksum)} (файл на клиенте)
                 
                 """);
