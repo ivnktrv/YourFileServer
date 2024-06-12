@@ -1,6 +1,7 @@
 ﻿using yfs_security;
 using yfs_server;
 using yfs_client;
+using System.Text;
 
 namespace yfs;
 
@@ -21,9 +22,10 @@ internal class YFSmain
             /_______/|  |  || | || \_/ || /  | |   | || || |_ ___/ || |_ | /    \  /  | |_ | /
             |____::| |  |__|\___/ \___/ |_|  |_|   |_||_|\___||___/ \___||_|     \/   \___||_|
             |"_____|/
-                                               VER 2.0 (10062024)
+                                               VER 2.1 (12062024)
 
               [1] Создать сервер    [2] Подключиться к серверу    [3] Создать файл авторизации
+                              [4] Создать файл конфигурации запуска сервера
             
             -> 
             """);
@@ -40,6 +42,26 @@ internal class YFSmain
         else if (key.Key == ConsoleKey.NumPad3 || key.Key == ConsoleKey.D3)
         {
             sec.createAuthFile();
+        }
+        else if (key.Key == ConsoleKey.NumPad4 || key.Key == ConsoleKey.D4)
+        {
+            Console.Clear();
+            Console.WriteLine("\x1b[3J");
+            Console.WriteLine("##### СОЗДАНИЕ ФАЙЛА КОНФИГУРАЦИИ ЗАПУСКА СЕРВЕРА #####\n");
+            Console.Write("Папка, которая будет выделяться для сервера: ");
+            string rootDir = Console.ReadLine();
+            Console.Write("Порт: ");
+            string port = Console.ReadLine();
+            Console.Write("IP: ");
+            string ip = Console.ReadLine();
+
+            using FileStream fs = new("yfs_server.startup", FileMode.Create, FileAccess.Write);
+            fs.Write(Encoding.UTF8.GetBytes($"""
+                useStartupFile=yes
+                rootDir={rootDir}
+                serverPort={port}
+                useIP={ip}
+                """));
         }
     }
 }
