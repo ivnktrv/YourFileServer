@@ -27,9 +27,6 @@ public class YFSnet
         }
         Console.Write("\nКакой IP выбрать?: ");
         ConsoleKeyInfo key = Console.ReadKey();
-        Console.Clear();
-        Console.WriteLine("\x1b[3J");
-        Console.WriteLine($"[{DateTime.Now}] [i] Выбран IP: {ips[int.Parse(key.KeyChar.ToString())]}");
 
         return ips[int.Parse(key.KeyChar.ToString())];
     }
