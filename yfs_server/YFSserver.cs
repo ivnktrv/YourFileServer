@@ -3,6 +3,7 @@ using yfs_security;
 using System.Text;
 using yfs_net;
 using yfs_io;
+using System.Runtime.InteropServices;
 
 namespace yfs_server;
 
@@ -15,26 +16,39 @@ public class YFSserver
     private string rootDir;
     private string setDir;
     private string setIP;
+    private int setPort;
 
     public void run()
     {
         io.clearTerminal();
-        Console.Write("Какую папку выделить для сервера?: ");
-        rootDir = Console.ReadLine();
-        Console.Write("Укажите порт: ");
-        int port = int.Parse(Console.ReadLine());
+        Dictionary<string, string> startupConfig = io.readStartupFile("yfs_server.startup");
+        if (startupConfig["useStartupFile"] == "no")
+        {
+            Console.Write("Какую папку выделить для сервера?: ");
+            rootDir = Console.ReadLine();
+            Console.Write("Укажите порт: ");
+            setPort = int.Parse(Console.ReadLine());
+
+            io.clearTerminal();
+
+            setIP = net.getIP();
+        }
+        else if (startupConfig["useStartupFile"] == "yes")
+        {
+            rootDir = startupConfig["rootDir"];
+            setPort = int.Parse(startupConfig["serverPort"]);
+            setIP = startupConfig["useIP"];
+        }
 
         setDir = rootDir;
-        io.clearTerminal();
-
-        setIP = net.getIP();
+        Console.WriteLine($"##### IP: {setIP}, ПОРТ: {setPort} #####\n");
         Console.WriteLine($"[{DateTime.Now}] [i] Ожидаю подключения\n");
 
         while (true)
         {
             while (true)
             {
-                Socket socket = net.createServer(setIP, port);
+                Socket socket = net.createServer(setIP, setPort);
                 Socket connClient = socket.Accept();
 
                 bool auth = sec.checkAuthData(connClient);
