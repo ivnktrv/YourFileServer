@@ -20,7 +20,8 @@ public class YFSserver
     public void run()
     {
         io.clearTerminal();
-        Dictionary<string, string> startupConfig = io.readStartupFile("yfs_server.startup");
+        Dictionary<string, string>? startupConfig = io.readStartupFile($"yfs_{Environment.MachineName}.startup");
+
         if (startupConfig["useStartupFile"] == "no")
         {
             Console.Write("Какую папку выделить для сервера?: ");
@@ -40,8 +41,10 @@ public class YFSserver
         }
 
         setDir = rootDir;
+
+        io.clearTerminal();
         Console.WriteLine($"##### IP: {setIP}, ПОРТ: {setPort} #####\n");
-        Console.WriteLine($"[{DateTime.Now}] [i] Ожидаю подключения\n");
+        Console.WriteLine($"[{DateTime.Now}] [i] Ожидаю подключения");
 
         while (true)
         {
@@ -66,7 +69,7 @@ public class YFSserver
                 }
 
 
-                Console.WriteLine($"[{DateTime.Now}] [i] Подключён клиент (IP: {connClient.RemoteEndPoint})");
+                Console.WriteLine($"\n[{DateTime.Now}] [i] Подключён клиент (IP: {connClient.RemoteEndPoint})");
 
                 while (true)
                 {

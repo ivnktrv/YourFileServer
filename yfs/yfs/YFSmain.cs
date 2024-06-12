@@ -55,7 +55,7 @@ internal class YFSmain
             Console.Write("IP: ");
             string ip = Console.ReadLine();
 
-            using FileStream fs = new("yfs_server.startup", FileMode.Create, FileAccess.Write);
+            using FileStream fs = new($"yfs_{Environment.MachineName}.startup", FileMode.Create, FileAccess.Write);
             fs.Write(Encoding.UTF8.GetBytes($"""
                 useStartupFile=yes
                 rootDir={rootDir}
