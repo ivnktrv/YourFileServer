@@ -283,6 +283,38 @@ public class YFSio
         }
     }
 
+    public Dictionary<string, string> readStartupFile(string startupFile)
+    {
+        Dictionary<string, string> data = [];
+        foreach (string line in File.ReadAllLines(startupFile))
+        {
+            string _key = "";
+            string _value = "";
+
+            foreach (char _char in line)
+            {
+                if (_char != '=')
+                    _key += _char;
+                else
+                    break;
+            }
+            foreach (char _char in line.Reverse())
+            {
+                if (_char != '=')
+                    _value += _char;
+                else
+                    break;
+            }
+
+            char[] _reverseStringValue = _value.ToCharArray();
+            Array.Reverse(_reverseStringValue);
+
+            data.Add(_key, new string(_reverseStringValue));
+        }
+
+        return data;
+    }
+
     public void clearTerminal()
     {
         Console.Clear();
