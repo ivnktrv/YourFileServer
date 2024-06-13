@@ -73,7 +73,7 @@ public class YFSio
             if (isServer)
                 Console.WriteLine($"[{DateTime.Now}] [...] Файл отправляется: {file}");
 
-            long c = 1024*128;
+            long c = 1024*180;
             while (br.BaseStream.Position != br.BaseStream.Length)
             {
                 byte[] readByte = { br.ReadByte() };
@@ -82,7 +82,7 @@ public class YFSio
                 {
                     clearTerminal();
                     Console.WriteLine($"[UPLOAD] {Path.GetFileName(path)} [{br.BaseStream.Position / 1024} кб / {br.BaseStream.Length / 1024} кб]");
-                    c += 1024*128;
+                    c += 1024*180;
                 }
             }
             br.Close();
@@ -192,7 +192,7 @@ public class YFSio
         if (isServer)
             Console.WriteLine($"[{DateTime.Now}] [i] Принимаю файл: {Path.GetFileName(Encoding.UTF8.GetString(getFileName))}");
         
-        long c = 1024*128;
+        long c = 1024*180;
         while (br.BaseStream.Position != fLength)
         {
             byte[] wr = new byte[1];
@@ -202,7 +202,7 @@ public class YFSio
             {
                 clearTerminal();
                 Console.WriteLine($"[DOWNLOAD] {Encoding.UTF8.GetString(getFileName)} [{br.BaseStream.Position / 1024} кб / {fLength / 1024} кб]");
-                c += 1024*128;
+                c += 1024*180;
             }
         }
         br.Close();
