@@ -15,26 +15,42 @@ public class YFSserver
     private string rootDir;
     private string setDir;
     private string setIP;
+    private int setPort;
 
     public void run()
     {
         io.clearTerminal();
-        Console.Write("Какую папку выделить для сервера?: ");
-        rootDir = Console.ReadLine();
-        Console.Write("Укажите порт: ");
-        int port = int.Parse(Console.ReadLine());
+        Dictionary<string, string>? startupConfig = io.readStartupFile($"yfs_{Environment.MachineName}.startup");
+
+        if (startupConfig["useStartupFile"] == "no")
+        {
+            Console.Write("Какую папку выделить для сервера?: ");
+            rootDir = Console.ReadLine();
+            Console.Write("Укажите порт: ");
+            setPort = int.Parse(Console.ReadLine());
+
+            io.clearTerminal();
+
+            setIP = net.getIP();
+        }
+        else if (startupConfig["useStartupFile"] == "yes")
+        {
+            rootDir = startupConfig["rootDir"];
+            setPort = int.Parse(startupConfig["serverPort"]);
+            setIP = startupConfig["useIP"];
+        }
 
         setDir = rootDir;
-        io.clearTerminal();
 
-        setIP = net.getIP();
-        Console.WriteLine($"[{DateTime.Now}] [i] Ожидаю подключения\n");
+        io.clearTerminal();
+        Console.WriteLine($"##### IP: {setIP}, ПОРТ: {setPort} #####\n");
+        Console.WriteLine($"[{DateTime.Now}] [i] Ожидаю подключения");
 
         while (true)
         {
             while (true)
             {
-                Socket socket = net.createServer(setIP, port);
+                Socket socket = net.createServer(setIP, setPort);
                 Socket connClient = socket.Accept();
 
                 bool auth = sec.checkAuthData(connClient);
@@ -53,7 +69,7 @@ public class YFSserver
                 }
 
 
-                Console.WriteLine($"[{DateTime.Now}] [i] Подключён клиент (IP: {connClient.RemoteEndPoint})");
+                Console.WriteLine($"\n[{DateTime.Now}] [i] Подключён клиент (IP: {connClient.RemoteEndPoint})");
 
                 while (true)
                 {

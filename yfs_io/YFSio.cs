@@ -52,7 +52,7 @@ public class YFSio
             BinaryReader b = new(File.Open(path, FileMode.Open));
 
             if (isServer)
-                Console.WriteLine($"[{DateTime.Now}] [...] Подготовка к отправке файла {file}");
+                Console.WriteLine($"[{DateTime.Now}] [...] Подготовка к отправке файла: {file}");
             
             byte[] getFileName = Encoding.UTF8.GetBytes(file);
             byte[] getFileName_arrLength = { (byte)getFileName.Length };
@@ -73,7 +73,7 @@ public class YFSio
             if (isServer)
                 Console.WriteLine($"[{DateTime.Now}] [...] Файл отправляется: {file}");
 
-            long c = 100000;
+            long c = 1024*180;
             while (br.BaseStream.Position != br.BaseStream.Length)
             {
                 byte[] readByte = { br.ReadByte() };
@@ -82,9 +82,8 @@ public class YFSio
                 {
                     clearTerminal();
                     Console.WriteLine($"[UPLOAD] {Path.GetFileName(path)} [{br.BaseStream.Position / 1024} кб / {br.BaseStream.Length / 1024} кб]");
-                    c += 100000;
+                    c += 1024*180;
                 }
-                //br.BaseStream.Position += 1; // НЕ ЗАБЫТЬ УДАЛИТЬ
             }
             br.Close();
 
@@ -193,7 +192,7 @@ public class YFSio
         if (isServer)
             Console.WriteLine($"[{DateTime.Now}] [i] Принимаю файл: {Path.GetFileName(Encoding.UTF8.GetString(getFileName))}");
         
-        long c = 100000;
+        long c = 1024*180;
         while (br.BaseStream.Position != fLength)
         {
             byte[] wr = new byte[1];
@@ -203,7 +202,7 @@ public class YFSio
             {
                 clearTerminal();
                 Console.WriteLine($"[DOWNLOAD] {Encoding.UTF8.GetString(getFileName)} [{br.BaseStream.Position / 1024} кб / {fLength / 1024} кб]");
-                c += 100000;
+                c += 1024*180;
             }
         }
         br.Close();
@@ -280,6 +279,46 @@ public class YFSio
                 
                 """);
             }
+        }
+    }
+
+    public Dictionary<string, string>? readStartupFile(string startupFile)
+    {
+        Dictionary<string, string>? data = [];
+        try
+        {
+            foreach (string line in File.ReadAllLines(startupFile))
+            {
+                string _key = "";
+                string _value = "";
+
+                foreach (char _char in line)
+                {
+                    if (_char != '=')
+                        _key += _char;
+                    else
+                        break;
+                }
+                foreach (char _char in line.Reverse())
+                {
+                    if (_char != '=')
+                        _value += _char;
+                    else
+                        break;
+                }
+
+                char[] _reverseStringValue = _value.ToCharArray();
+                Array.Reverse(_reverseStringValue);
+
+                data.Add(_key, new string(_reverseStringValue));
+            }
+
+            return data;
+        }
+        catch (FileNotFoundException)
+        {
+            data.Add("useStartupFile", "no");
+            return data;
         }
     }
 
