@@ -19,6 +19,7 @@ public class YFSserver
 
     public void run()
     {
+        #region чтение файла .startup
         io.clearTerminal();
         Dictionary<string, string>? startupConfig = io.readStartupFile($"yfs_{Environment.MachineName}.startup");
 
@@ -39,7 +40,8 @@ public class YFSserver
             setPort = int.Parse(startupConfig["serverPort"]);
             setIP = startupConfig["useIP"];
         }
-
+        #endregion
+        
         setDir = rootDir;
 
         io.clearTerminal();
@@ -131,6 +133,13 @@ public class YFSserver
                             setDir = rootDir;
                         else
                             setDir += "/" + getDir;
+                    }
+
+                    else if (cmd == "fileinfo")
+                    {
+                        Console.WriteLine($"[{DateTime.Now}] [i] Получена команда: отправить информацию о файле");
+                        string file = Encoding.UTF8.GetString(net.getData(connClient));
+                        io.getFileInfo(connClient, setDir+'/'+file);
                     }
 
                     else if (cmd == "closeconn")
