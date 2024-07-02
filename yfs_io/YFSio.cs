@@ -282,6 +282,24 @@ public class YFSio
         }
     }
 
+    public void getFileInfo(Socket __socket, string path)
+    {
+        FileInfo fileInfo = new FileInfo(path);
+        string data = $"""
+            Имя: {fileInfo.Name}
+            Дата создания: {fileInfo.CreationTime}
+            Размер: {
+            (fileInfo.Length > 1048576 ? 
+              Math.Round(fileInfo.Length/1024.0/1024.0, 2)+" мб"
+            : Math.Round(fileInfo.Length/1024.0, 2)+" кб")
+            }
+            Хэш SHA256: {sec.checksumFileSHA256(path)}
+            """;
+
+        byte[] sendData = Encoding.UTF8.GetBytes(data);
+        __socket.Send(sendData);
+    }
+
     public Dictionary<string, string>? readStartupFile(string startupFile)
     {
         Dictionary<string, string>? data = [];
