@@ -121,6 +121,19 @@ public class YFSclient
                     socket.Close();
                     break;
                 }
+
+                else if (key.Key == ConsoleKey.F)
+                {
+                    net.sendData(socket, "fileinfo");
+                    Console.Write("\nФайл: ");
+                    net.sendData(socket, Console.ReadLine());
+
+                    byte[] data = new byte[1024];
+                    socket.Receive(data);
+
+                    Console.WriteLine('\n'+Encoding.UTF8.GetString(data));
+                    Console.ReadKey();
+                }
             }
         }
          catch (SocketException)
