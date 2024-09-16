@@ -6,6 +6,7 @@ namespace yfs_io;
 
 public class YFSio
 {
+    private const string KEYTABLE_FILE = ".keytable";
     YFSsec sec = new();
 
     public string[] getFiles(string dirName)
@@ -48,6 +49,14 @@ public class YFSio
                 path = file;
             else
                 path = $"{folder}/{file}";
+
+            string keyFile = "";
+            if (isServer is false)
+            {
+                keyFile = sec.encryptFile(path);
+                file = file + ".enc";
+                path += ".enc";
+            }
 
             BinaryReader b = new(File.Open(path, FileMode.Open));
 
@@ -151,6 +160,11 @@ public class YFSio
                    
                     """);
                 }
+            }
+
+            if (isServer is false)
+            {
+                writeKeytableFile(keyFile, file.Remove(0,1));
             }
         }
         catch (FileNotFoundException)
@@ -280,6 +294,23 @@ public class YFSio
                 """);
             }
         }
+        if (!isServer)
+        {
+            //string key = "";
+            Dictionary<string, string> getKey = readStartupFile(".keytable");
+            
+            /*
+            string findKey = getKey.FirstOrDefault(
+                x => x.Value == getKey[Path.GetFileName(Encoding.UTF8.GetString(getFileName))]
+            ).Key;
+            if (Path.GetFileName(Encoding.UTF8.GetString(getFileName)) == findKey)
+            {
+                key = findKey;
+            }
+            */
+            
+            sec.decryptFile(savePath, getKey[Path.GetFileName(Encoding.UTF8.GetString(getFileName))]);
+        }
     }
 
     public void getFileInfo(Socket __socket, string path)
@@ -298,6 +329,18 @@ public class YFSio
 
         byte[] sendData = Encoding.UTF8.GetBytes(data);
         __socket.Send(sendData);
+    }
+
+    public void writeKeytableFile(string key, string file)
+    {
+        FileStream fs = new(KEYTABLE_FILE, FileMode.Append);
+        fs.Write(Encoding.UTF8.GetBytes($"{file}={key}\n"));
+        fs.Close();
+    }
+
+    public string readKeytableFile(string path)
+    {
+        return "";
     }
 
     public Dictionary<string, string>? readStartupFile(string startupFile)

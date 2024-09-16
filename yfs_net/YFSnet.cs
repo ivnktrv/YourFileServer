@@ -13,10 +13,10 @@ public class YFSnet
 
         foreach (IPAddress ip in host.AddressList)
         {
-            if (ip.AddressFamily == AddressFamily.InterNetwork)
-            {
-                getIPs.Add(ip.ToString());
-            }
+            //if (ip.AddressFamily == AddressFamily.InterNetwork)
+            //{
+            getIPs.Add(ip.ToString());
+            //}
         }
         string[] ips = getIPs.ToArray();
 

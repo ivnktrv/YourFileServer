@@ -1,11 +1,15 @@
 ﻿using System.Security.Cryptography;
 using System.Net.Sockets;
 using System.Text;
+using yfs_keygen;
 
 namespace yfs_security;
 
 public class YFSsec
 {
+    private const byte BYTE255 = 0b11111111;
+
+
     public bool checkAuthData(Socket __socket)
     {
         byte[] getLoginLength = new byte[1];
@@ -82,4 +86,48 @@ public class YFSsec
 
         return hash.ToLower();
     }
+
+    public string encryptFile(string openFile)
+    {
+        using BinaryReader readFile = new(File.Open(openFile, FileMode.Open));
+        using BinaryWriter writeFile = new(File.Open(openFile+".enc", FileMode.Create));
+
+        string key = new YFSkeygen()._keygen();
+        byte[] _keyBytes = new YFSkeygen()._keyBytes(key);
+
+        Console.WriteLine("[...] Файл шифруется перед отправкой. Подождите");
+        while (readFile.BaseStream.Position != readFile.BaseStream.Length)
+        {
+            byte wb = readFile.ReadByte();
+            foreach (byte b in _keyBytes)
+            {
+                wb ^= b;
+                wb = (byte)(BYTE255 - wb);
+            }
+            writeFile.Write(wb);
+        }
+        Console.WriteLine("\n[+] Сделано");
+
+        return key;
+    }
+
+    public void decryptFile(string openFile, string key)
+    {
+        using BinaryReader readFile = new(File.Open(openFile, FileMode.Open));
+        using BinaryWriter writeFile = new(File.Open(openFile.Remove(openFile.Length-4), FileMode.Create));
+
+        Console.WriteLine("[...] Файл расшифровыается");
+        while (readFile.BaseStream.Position != readFile.BaseStream.Length)
+        {
+            byte wb = readFile.ReadByte();
+            foreach (byte b in key.Reverse())
+            {
+                wb ^= b;
+                wb = (byte)(BYTE255 - wb);
+            }
+            writeFile.Write(wb);
+        }
+        Console.WriteLine("[+] Сделано");
+    }
+
 }

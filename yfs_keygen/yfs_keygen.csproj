@@ -6,8 +6,4 @@
     <Nullable>enable</Nullable>
   </PropertyGroup>
 
-  <ItemGroup>
-    <ProjectReference Include="..\yfs_keygen\yfs_keygen.csproj" />
-  </ItemGroup>
-
 </Project>

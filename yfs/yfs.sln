@@ -13,7 +13,9 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "yfs_server", "..\yfs_server
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "yfs_client", "..\yfs_client\yfs_client.csproj", "{2CE2ABB0-0869-41B1-8844-4C0A5B2A2BBC}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "yfs_security", "..\yfs_security\yfs_security.csproj", "{71658472-8540-4DCF-8AE5-5D8C8EBADDA2}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "yfs_security", "..\yfs_security\yfs_security.csproj", "{71658472-8540-4DCF-8AE5-5D8C8EBADDA2}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "yfs_keygen", "..\yfs_keygen\yfs_keygen.csproj", "{33D4AB2E-5CB6-4269-B916-01AFFB33F236}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -45,6 +47,10 @@ Global
 		{71658472-8540-4DCF-8AE5-5D8C8EBADDA2}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{71658472-8540-4DCF-8AE5-5D8C8EBADDA2}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{71658472-8540-4DCF-8AE5-5D8C8EBADDA2}.Release|Any CPU.Build.0 = Release|Any CPU
+		{33D4AB2E-5CB6-4269-B916-01AFFB33F236}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{33D4AB2E-5CB6-4269-B916-01AFFB33F236}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{33D4AB2E-5CB6-4269-B916-01AFFB33F236}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{33D4AB2E-5CB6-4269-B916-01AFFB33F236}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
