@@ -166,6 +166,8 @@ public class YFSio
             {
                 writeKeytableFile(keyFile, file.Remove(0,1));
             }
+
+            File.Delete(path);
         }
         catch (FileNotFoundException)
         {
@@ -298,18 +300,8 @@ public class YFSio
         {
             //string key = "";
             Dictionary<string, string> getKey = readStartupFile(".keytable");
-            
-            /*
-            string findKey = getKey.FirstOrDefault(
-                x => x.Value == getKey[Path.GetFileName(Encoding.UTF8.GetString(getFileName))]
-            ).Key;
-            if (Path.GetFileName(Encoding.UTF8.GetString(getFileName)) == findKey)
-            {
-                key = findKey;
-            }
-            */
-            
             sec.decryptFile(savePath, getKey[Path.GetFileName(Encoding.UTF8.GetString(getFileName))]);
+            File.Delete(savePath);
         }
     }
 
@@ -333,9 +325,33 @@ public class YFSio
 
     public void writeKeytableFile(string key, string file)
     {
-        FileStream fs = new(KEYTABLE_FILE, FileMode.Append);
-        fs.Write(Encoding.UTF8.GetBytes($"{file}={key}\n"));
-        fs.Close();
+        List<string> lines = new List<string>();
+
+        if (File.Exists(KEYTABLE_FILE))
+        {
+            string[] getLines = File.ReadAllLines(KEYTABLE_FILE);
+            lines = getLines.ToList();
+            foreach (string line in lines.ToList())
+            {
+                if (line.Contains(Path.GetFileName(file)))
+                {
+                    int index = lines.IndexOf(line);
+                    lines.RemoveAt(index);
+                }
+            }
+            File.WriteAllText(KEYTABLE_FILE, string.Empty);
+        }
+
+        using FileStream fs = new(KEYTABLE_FILE, FileMode.Append);
+        
+        foreach (string s in lines.ToArray())
+        {
+            fs.Write(Encoding.UTF8.GetBytes(s+"\n"));
+        }
+
+        
+        fs.Write(Encoding.UTF8.GetBytes($"{Path.GetFileName(file)}={key}\n"));
+        
     }
 
     public string readKeytableFile(string path)
