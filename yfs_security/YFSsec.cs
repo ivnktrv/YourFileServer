@@ -95,7 +95,7 @@ public class YFSsec
         string key = new YFSkeygen()._keygen();
         byte[] _keyBytes = new YFSkeygen()._keyBytes(key);
 
-        Console.WriteLine("[...] Файл шифруется перед отправкой. Подождите");
+        Console.WriteLine("\n[...] Файл шифруется перед отправкой. Подождите");
         while (readFile.BaseStream.Position != readFile.BaseStream.Length)
         {
             byte wb = readFile.ReadByte();
@@ -116,7 +116,7 @@ public class YFSsec
         using BinaryReader readFile = new(File.Open(openFile, FileMode.Open));
         using BinaryWriter writeFile = new(File.Open(openFile.Remove(openFile.Length-4), FileMode.Create));
 
-        Console.WriteLine("[...] Файл расшифровыается");
+        Console.WriteLine("[...] Файл расшифровывается");
         while (readFile.BaseStream.Position != readFile.BaseStream.Length)
         {
             byte wb = readFile.ReadByte();

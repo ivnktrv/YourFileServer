@@ -40,7 +40,7 @@ public class YFSio
     }
 
     public void uploadFile(Socket __socket, string file, 
-        string? folder = null, bool isServer = false)
+        string? folder = null, bool isServer = false, bool encryptFile = false)
     {
         try
         {
@@ -51,7 +51,7 @@ public class YFSio
                 path = $"{folder}/{file}";
 
             string keyFile = "";
-            if (isServer is false)
+            if (!isServer && encryptFile)
             {
                 keyFile = sec.encryptFile(path);
                 file = file + ".enc";
@@ -162,12 +162,11 @@ public class YFSio
                 }
             }
 
-            if (isServer is false)
+            if (!isServer && encryptFile)
             {
                 writeKeytableFile(keyFile, file.Remove(0,1));
+                File.Delete(path);
             }
-
-            File.Delete(path);
         }
         catch (FileNotFoundException)
         {
@@ -298,10 +297,13 @@ public class YFSio
         }
         if (!isServer)
         {
-            //string key = "";
-            Dictionary<string, string> getKey = readStartupFile(".keytable");
-            sec.decryptFile(savePath, getKey[Path.GetFileName(Encoding.UTF8.GetString(getFileName))]);
-            File.Delete(savePath);
+            try
+            {
+                Dictionary<string, string> getKey = readStartupFile(".keytable");
+                sec.decryptFile(savePath, getKey[Path.GetFileName(Encoding.UTF8.GetString(getFileName))]);
+                File.Delete(savePath);
+            }
+            catch (KeyNotFoundException) { }
         }
     }
 
@@ -316,7 +318,7 @@ public class YFSio
               Math.Round(fileInfo.Length/1024.0/1024.0, 2)+" мб"
             : Math.Round(fileInfo.Length/1024.0, 2)+" кб")
             }
-            Хэш SHA256: {sec.checksumFileSHA256(path)}
+            SHA256: {sec.checksumFileSHA256(path)}
             """;
 
         byte[] sendData = Encoding.UTF8.GetBytes(data);

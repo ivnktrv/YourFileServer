@@ -75,8 +75,12 @@ public class YFSclient
                     Console.Write("\nКакой файл загрузить на сервер?: ");
                     string sendFile = Console.ReadLine();
 
-                    Console.WriteLine($"\n[...] Отправка файла: {sendFile}");
-                    io.uploadFile(socket, sendFile);
+                    Console.Write("Зашифровать файл перед отправкой? [y/n]: ");
+                    ConsoleKeyInfo k = Console.ReadKey();
+                    if (k.Key == ConsoleKey.Y)
+                        io.uploadFile(socket, sendFile, encryptFile: true);
+                    else
+                        io.uploadFile(socket, sendFile);
                 }
 
                 else if (key.Key == ConsoleKey.NumPad3 || key.Key == ConsoleKey.D3)
