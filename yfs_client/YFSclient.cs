@@ -36,15 +36,36 @@ public class YFSclient
                 return;
             }
 
+            string currentDir = "/";
             while (true)
             {
                 Console.Clear();
                 Console.WriteLine("\x1b[3J");
+                Console.WriteLine($"""
+                ----------------------------------------------
+                """);
+
+                net.sendData(socket, "list");
+
+                while (true)
+                {
+                    byte[] b = new byte[512];
+                    socket.Receive(b);
+                    string s = Encoding.UTF8.GetString(b);
+                    Console.Write(s);
+                    if (s.Contains(":END_OF_LIST"))
+                        break;
+                }
 
                 Console.Write($"""
-                [1] Скачать файл       [2] Загрузить файл
-                [3] Удалить файл       [4] Список файлов
-                [5] Перейти в каталог  [6] Отключиться
+
+
+                ----------------------------------------------
+                 ДИРЕКТОРИЯ: {currentDir}
+                
+                 [1] Скачать файл       [2] Загрузить файл
+                 [3] Удалить файл       [4] Перейти в каталог
+                 [5] Отключиться        [F] Информация о файле
 
                 -> 
                 """);
@@ -93,33 +114,21 @@ public class YFSclient
                     net.sendData(socket, delFile);
                 }
 
-                else if (key.Key == ConsoleKey.NumPad4 || key.Key == ConsoleKey.D4)
-                {
-                    net.sendData(socket, "list");
-
-                    while (true)
-                    {
-                        byte[] b = new byte[512];
-                        socket.Receive(b);
-                        string s = Encoding.UTF8.GetString(b);
-                        Console.Write(s);
-                        if (s.Contains(":END_OF_LIST"))
-                            break;
-                    }
-                    Console.ReadKey();
-                }
-
-                else if (key.Key == ConsoleKey.NumPad5 || key.Key == ConsoleKey.D5)
+                else if (key.Key == ConsoleKey.NumPad4 || key.Key == ConsoleKey.D5)
                 {
                     net.sendData(socket, "cd");
 
                     Console.Write("\nВ какой каталог перейти?: ");
-                    string dir = Console.ReadLine();
+                    string changeDir = Console.ReadLine();
 
-                    net.sendData(socket, dir);
+                    net.sendData(socket, changeDir);
+                    if (changeDir == "..")
+                        currentDir = "/";
+                    else
+                        currentDir = changeDir;
                 }
 
-                else if (key.Key == ConsoleKey.NumPad6 || key.Key == ConsoleKey.D6)
+                else if (key.Key == ConsoleKey.NumPad5 || key.Key == ConsoleKey.D6)
                 {
                     net.sendData(socket, "closeconn");
                     socket.Close();

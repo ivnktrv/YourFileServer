@@ -14,7 +14,7 @@ internal class YFSmain
         YFSclient client = new();
         YFSsec sec = new();
 
-        Console.Write("""
+        /*
               _____
               | __ \  __    __               _____    __       ___
               | -- |  \ \  / /               | ___| * | | ___ / __|  ___               ___
@@ -28,6 +28,23 @@ internal class YFSmain
               [1] Создать сервер    [2] Подключиться к серверу    [3] Создать файл авторизации
                               [4] Создать файл конфигурации запуска сервера
             
+            -> 
+         */
+        Console.Write("""
+              _____
+              | __ \  __    __               _____    __       ___
+              | -- |  \ \  / /               | ___| * | | ___ / __|  ___               ___
+              |____|   \ \/ /___ __  __   ___| |__ __ | |/ . \\__ \ / . \  ___ __  __ / . \  ___
+             ________   |  |/   \| | | | / _|| ___|| || || __/   \ \| __/ / _| \ \/ / | __/ / _|
+            /_______/|  |  || | || \_/ || /  | |   | || || |_ ___/ || |_ | /    \  /  | |_ | /
+            |____::| |  |__|\___/ \___/ |_|  |_|   |_||_|\___||___/ \___||_|     \/   \___||_|
+            |"_____|/
+                                               VER 3.0 (21092024)
+                                GitHub: https://github.com/ivnktrv/YourFileServer
+
+              [1] Создать сервер                 [3] Создать файл авторизации 
+              [2] Подключиться к серверу         [4] Создать файл конфигурации запуска сервера
+
             -> 
             """);
         ConsoleKeyInfo key = Console.ReadKey();
@@ -64,12 +81,13 @@ internal class YFSmain
                 useIP={ip}
                 """));
         }
-    
+        /*
         else if (key.Key == ConsoleKey.G)
         {
             ProcessStartInfo github = new ProcessStartInfo("https://github.com/ivnktrv/YourFileServer");
             github.UseShellExecute = true;
             Process.Start(github);
         }
+        */
     }
 }

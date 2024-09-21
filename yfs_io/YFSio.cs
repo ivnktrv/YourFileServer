@@ -1,4 +1,5 @@
-﻿using System.Net.Sockets;
+﻿using System.Net;
+using System.Net.Sockets;
 using System.Text;
 using yfs_security;
 
@@ -6,7 +7,6 @@ namespace yfs_io;
 
 public class YFSio
 {
-    private const string KEYTABLE_FILE = ".keytable";
     YFSsec sec = new();
 
     public string[] getFiles(string dirName)
@@ -33,9 +33,15 @@ public class YFSio
         }
         catch (DirectoryNotFoundException)
         {
-            Console.WriteLine($"[{DateTime.Now}] [-] Папка не найдена: {dirName}");
-            string[] dirNotFound = { $"\nПапки {dirName} не существует\n\n:END_OF_LIST" };
+            Console.WriteLine($"[{DateTime.Now}] [-] Директория не найдена: {dirName}");
+            string[] dirNotFound = { $"\nДиректории {dirName} не существует. Чтобы выйти, смените директорию на /\n\n:END_OF_LIST" };
             return dirNotFound;
+        }
+        catch (IOException)
+        {
+            Console.WriteLine($"[{DateTime.Now}] [-] Некорректное имя директории: {dirName}");
+            string[] incorrectDirName = { $"Некорректное имя директории: {dirName}. Чтобы выйти, смените директорию на /\n\n:END_OF_LIST" };
+            return incorrectDirName;
         }
     }
 
@@ -62,7 +68,7 @@ public class YFSio
 
             if (isServer)
                 Console.WriteLine($"[{DateTime.Now}] [...] Подготовка к отправке файла: {file}");
-            
+
             byte[] getFileName = Encoding.UTF8.GetBytes(file);
             byte[] getFileName_arrLength = { (byte)getFileName.Length };
             byte[] getFileLength = BitConverter.GetBytes(b.BaseStream.Length);
@@ -75,14 +81,14 @@ public class YFSio
             __socket.Send(getFileLength_arrSize);
             __socket.Send(getFileLength);
             __socket.Send(getFileChecksum);
-            
+
             BinaryReader br = new(File.Open(path, FileMode.Open));
             br.BaseStream.Position = 0;
-            
+
             if (isServer)
                 Console.WriteLine($"[{DateTime.Now}] [...] Файл отправляется: {file}");
 
-            long c = 1024*180;
+            long c = 1024 * 180;
             while (br.BaseStream.Position != br.BaseStream.Length)
             {
                 byte[] readByte = { br.ReadByte() };
@@ -91,7 +97,7 @@ public class YFSio
                 {
                     clearTerminal();
                     Console.WriteLine($"[UPLOAD] {Path.GetFileName(path)} [{br.BaseStream.Position / 1024} кб / {br.BaseStream.Length / 1024} кб]");
-                    c += 1024*180;
+                    c += 1024 * 180;
                 }
             }
             br.Close();
@@ -143,7 +149,7 @@ public class YFSio
                         {Encoding.UTF8.GetString(uploadedFileChecksum)} (файл на клиенте)
                     
                     """);
-                } 
+                }
             }
 
             else
@@ -164,14 +170,20 @@ public class YFSio
 
             if (!isServer && encryptFile)
             {
-                writeKeytableFile(keyFile, file.Remove(0,1));
+                writeKeytableFile(__socket, keyFile, file.Remove(0, 1));
                 File.Delete(path);
             }
         }
         catch (FileNotFoundException)
         {
             Console.WriteLine($"[{DateTime.Now}] [-] Файл не найден: {file}");
-            byte[] getFileName_arrLengthZero = {0};
+            byte[] getFileName_arrLengthZero = { 0 };
+            __socket.Send(getFileName_arrLengthZero);
+        }
+        catch (IOException)
+        {
+            Console.WriteLine($"[{DateTime.Now}] [-] Некорректное имя файла: {file}. Отменяю отправку");
+            byte[] getFileName_arrLengthZero = { 0 };
             __socket.Send(getFileName_arrLengthZero);
         }
     }
@@ -184,7 +196,7 @@ public class YFSio
 
         if (getFileNameArrayLength[0] == 0)
         {
-            Console.WriteLine("[-] Файл не найден");
+            Console.WriteLine(isServer ? $"[{DateTime.Now}] [i] Клиент пытался отправить не существующий у себя файл" : "[-] Файл не найден");
             return;
         }
 
@@ -325,13 +337,15 @@ public class YFSio
         __socket.Send(sendData);
     }
 
-    public void writeKeytableFile(string key, string file)
+    public void writeKeytableFile(Socket __socket, string key, string file)
     {
         List<string> lines = new List<string>();
+        IPEndPoint getIPAddres = __socket.RemoteEndPoint as IPEndPoint;
+        string keyTableFile = $"{getIPAddres.Address}.keytable";
 
-        if (File.Exists(KEYTABLE_FILE))
+        if (File.Exists(keyTableFile))
         {
-            string[] getLines = File.ReadAllLines(KEYTABLE_FILE);
+            string[] getLines = File.ReadAllLines(keyTableFile);
             lines = getLines.ToList();
             foreach (string line in lines.ToList())
             {
@@ -341,19 +355,17 @@ public class YFSio
                     lines.RemoveAt(index);
                 }
             }
-            File.WriteAllText(KEYTABLE_FILE, string.Empty);
+            File.WriteAllText(keyTableFile, string.Empty);
         }
 
-        using FileStream fs = new(KEYTABLE_FILE, FileMode.Append);
+        using FileStream fs = new(keyTableFile, FileMode.Append);
         
         foreach (string s in lines.ToArray())
         {
             fs.Write(Encoding.UTF8.GetBytes(s+"\n"));
         }
-
         
-        fs.Write(Encoding.UTF8.GetBytes($"{Path.GetFileName(file)}={key}\n"));
-        
+        fs.Write(Encoding.UTF8.GetBytes($"{Path.GetFileName(file)}={key}\n"));  
     }
 
     public string readKeytableFile(string path)

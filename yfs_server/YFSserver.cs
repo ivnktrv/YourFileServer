@@ -55,21 +55,25 @@ public class YFSserver
                 Socket socket = net.createServer(setIP, setPort);
                 Socket connClient = socket.Accept();
 
-                bool auth = sec.checkAuthData(connClient);
-                if (auth)             // если логин и пароль верны, отправляем 1 (данные верны)
+                try
                 {
-                    byte[] a = { 1 };
-                    connClient.Send(a);
-                }
-                else       // иначе: 0 (данные неверны)
-                {
-                    byte[] a = { 0 };
-                    connClient.Send(a);
-                    connClient.Close();
-                    socket.Close();
-                    break;
-                }
+                    bool auth = sec.checkAuthData(connClient);
 
+                    if (auth)             // если логин и пароль верны, отправляем 1 (данные верны)
+                    {
+                        byte[] a = { 1 };
+                        connClient.Send(a);
+                    }
+                    else       // иначе: 0 (данные неверны)
+                    {
+                        byte[] a = { 0 };
+                        connClient.Send(a);
+                        connClient.Close();
+                        socket.Close();
+                        break;
+                    }
+                }
+                catch (SocketException) { }
 
                 Console.WriteLine($"\n[{DateTime.Now}] [i] Подключён клиент (IP: {connClient.RemoteEndPoint})");
 
@@ -80,7 +84,7 @@ public class YFSserver
 
                     if (cmd == "list")
                     {
-                        Console.WriteLine($"[{DateTime.Now}] [i] Получена команда: отправить список файлов");
+                        //Console.WriteLine($"[{DateTime.Now}] [i] Получена команда: отправить список файлов");
                         string[] getDirsAndFiles = io.getFiles(setDir);
                         foreach (string items in getDirsAndFiles)
                         {
@@ -129,7 +133,7 @@ public class YFSserver
                         byte[] getDir_bytes = net.getData(connClient);
                         string getDir = Encoding.UTF8.GetString(getDir_bytes);
 
-                        if (getDir == "/")
+                        if (getDir == "/" || getDir == ".." || getDir.Contains(".."))
                             setDir = rootDir;
                         else
                             setDir += "/" + getDir;
