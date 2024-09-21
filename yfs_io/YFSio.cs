@@ -321,20 +321,27 @@ public class YFSio
 
     public void getFileInfo(Socket __socket, string path)
     {
-        FileInfo fileInfo = new FileInfo(path);
-        string data = $"""
+        try
+        {
+            FileInfo fileInfo = new FileInfo(path);
+            string data = $"""
             Имя: {fileInfo.Name}
             Дата создания: {fileInfo.CreationTime}
-            Размер: {
-            (fileInfo.Length > 1048576 ? 
-              Math.Round(fileInfo.Length/1024.0/1024.0, 2)+" мб"
-            : Math.Round(fileInfo.Length/1024.0, 2)+" кб")
-            }
+            Размер: {(fileInfo.Length > 1048576 ?
+                  Math.Round(fileInfo.Length / 1024.0 / 1024.0, 2) + " мб"
+                : Math.Round(fileInfo.Length / 1024.0, 2) + " кб")}
             SHA256: {sec.checksumFileSHA256(path)}
             """;
 
-        byte[] sendData = Encoding.UTF8.GetBytes(data);
-        __socket.Send(sendData);
+            byte[] sendData = Encoding.UTF8.GetBytes(data);
+            __socket.Send(sendData);
+        }
+        catch (FileNotFoundException)
+        {
+            string fileNotFound = "Файл не найден";
+            byte[] b = Encoding.UTF8.GetBytes(fileNotFound);
+            __socket.Send(b);
+        }
     }
 
     public void writeKeytableFile(Socket __socket, string key, string file)
