@@ -31,7 +31,7 @@ public class YFSclient
             if (getAnswer[0] == 1) { }
             else
             {
-                Console.WriteLine("\n[-] Логин или пароль неверный");
+                Console.WriteLine("\n[-] Логин или пароль неверный. Возможно, сервер изменил данные для входа");
                 socket.Close();
                 return;
             }
@@ -43,22 +43,20 @@ public class YFSclient
                 Console.WriteLine("\x1b[3J");
                 Console.WriteLine($"""
                 ----------------------------------------------
+                
                 """);
 
                 net.sendData(socket, "list");
 
                 while (true)
                 {
-                    byte[] b = new byte[512];
-                    socket.Receive(b);
-                    string s = Encoding.UTF8.GetString(b);
-                    Console.Write(s);
-                    if (s.Contains(":END_OF_LIST"))
-                        break;
+                    byte[] buff = net.getData(socket);
+                    string getDirsAndFiles = Encoding.UTF8.GetString(buff);
+                    if (getDirsAndFiles == ":END_OF_LIST") break;
+                    Console.WriteLine(getDirsAndFiles);
                 }
 
                 Console.Write($"""
-
 
                 ----------------------------------------------
                  ДИРЕКТОРИЯ: {currentDir}

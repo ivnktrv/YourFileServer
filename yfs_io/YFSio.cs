@@ -2,46 +2,46 @@
 using System.Net.Sockets;
 using System.Text;
 using yfs_security;
+using yfs_net;
 
 namespace yfs_io;
 
 public class YFSio
 {
     YFSsec sec = new();
+    YFSnet net = new();
 
-    public string[] getFiles(string dirName)
+    public void getFiles(Socket __socket, string dirName)
     {
-        List<string> dirsAndFiles = [];
-
         try
         {
             string[] dirs = Directory.GetDirectories(dirName);
-            foreach (string getDirs in dirs)
-            {
-                dirsAndFiles.Add($"\n{getDirs}");
-            }
-
             string[] files = Directory.GetFiles(dirName);
-            foreach (string getFiles in files)
+
+            foreach (string getDir in dirs)
             {
-                dirsAndFiles.Add($"\n{Path.GetFileName(getFiles)}");
+                net.sendData(__socket, "(DIR) " + new DirectoryInfo(getDir).Name);
             }
 
-            dirsAndFiles.Add("\n\n:END_OF_LIST"); // end of list
+            foreach (string getFile in files)
+            {
+                net.sendData(__socket, Path.GetFileName(getFile));
+            }
 
-            return dirsAndFiles.ToArray();
+            net.sendData(__socket, ":END_OF_LIST");
         }
         catch (DirectoryNotFoundException)
         {
             Console.WriteLine($"[{DateTime.Now}] [-] Директория не найдена: {dirName}");
-            string[] dirNotFound = { $"\nДиректории {dirName} не существует. Чтобы выйти, смените директорию на /\n\n:END_OF_LIST" };
-            return dirNotFound;
+            net.sendData(__socket, $"\nДиректории {dirName} не существует. Чтобы выйти, смените директорию на /");
+            net.sendData(__socket, ":END_OF_LIST");
+
         }
         catch (IOException)
         {
             Console.WriteLine($"[{DateTime.Now}] [-] Некорректное имя директории: {dirName}");
-            string[] incorrectDirName = { $"Некорректное имя директории: {dirName}. Чтобы выйти, смените директорию на /\n\n:END_OF_LIST" };
-            return incorrectDirName;
+            net.sendData(__socket, $"Некорректное имя директории: {dirName}. Чтобы выйти, смените директорию на /");
+            net.sendData(__socket, ":END_OF_LIST");
         }
     }
 
@@ -311,7 +311,7 @@ public class YFSio
         {
             try
             {
-                Dictionary<string, string> getKey = readStartupFile(".keytable");
+                Dictionary<string, string> getKey = readStartupFile($"{((IPEndPoint)__socket.RemoteEndPoint).Address}.keytable");
                 sec.decryptFile(savePath, getKey[Path.GetFileName(Encoding.UTF8.GetString(getFileName))]);
                 File.Delete(savePath);
             }

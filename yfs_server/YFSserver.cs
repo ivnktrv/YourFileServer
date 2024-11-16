@@ -85,12 +85,7 @@ public class YFSserver
                     if (cmd == "list")
                     {
                         //Console.WriteLine($"[{DateTime.Now}] [i] Получена команда: отправить список файлов");
-                        string[] getDirsAndFiles = io.getFiles(setDir);
-                        foreach (string items in getDirsAndFiles)
-                        {
-                            byte[] b = Encoding.UTF8.GetBytes(items);
-                            connClient.Send(b);
-                        }
+                        io.getFiles(connClient, setDir);
                     }
 
                     else if (cmd == "upload")

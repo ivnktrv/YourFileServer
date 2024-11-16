@@ -2,7 +2,6 @@
 using yfs_server;
 using yfs_client;
 using System.Text;
-using System.Diagnostics;
 
 namespace yfs;
 
@@ -23,7 +22,7 @@ internal class YFSmain
             /_______/|  |  || | || \_/ || /  | |   | || || |_ ___/ || |_ | /    \  /  | |_ | /
             |____::| |  |__|\___/ \___/ |_|  |_|   |_||_|\___||___/ \___||_|     \/   \___||_|
             |"_____|/
-                                               VER 3.0 (21092024)
+                                               VER 3.1 (16112024)
                                 GitHub: https://github.com/ivnktrv/YourFileServer
 
               [1] Создать сервер                 [3] Создать файл авторизации 
@@ -65,13 +64,5 @@ internal class YFSmain
                 useIP={ip}
                 """));
         }
-        /*
-        else if (key.Key == ConsoleKey.G)
-        {
-            ProcessStartInfo github = new ProcessStartInfo("https://github.com/ivnktrv/YourFileServer");
-            github.UseShellExecute = true;
-            Process.Start(github);
-        }
-        */
     }
 }
