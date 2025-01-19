@@ -3,6 +3,7 @@ using yfs_security;
 using System.Text;
 using yfs_net;
 using yfs_io;
+using System.Net;
 
 namespace yfs_server;
 
@@ -21,7 +22,7 @@ public class YFSserver
     {
         #region чтение файла .startup
         io.clearTerminal();
-        Dictionary<string, string>? startupConfig = io.readStartupFile($"yfs_{Environment.MachineName}.startup");
+        Dictionary<string, string>? startupConfig = io.readConfigFile($"yfs_{Environment.MachineName}.startup");
 
         if (startupConfig["useStartupFile"] == "no")
         {
@@ -45,7 +46,7 @@ public class YFSserver
         setDir = rootDir;
 
         io.clearTerminal();
-        Console.WriteLine($"##### IP: {setIP}, ПОРТ: {setPort} #####\n");
+        Console.WriteLine($"##### IP: {setIP}, PORT: {setPort} #####\n");
         Console.WriteLine($"[{DateTime.Now}] [i] Ожидаю подключения");
 
         while (true)
@@ -75,7 +76,7 @@ public class YFSserver
                 }
                 catch (SocketException) { }
 
-                Console.WriteLine($"\n[{DateTime.Now}] [i] Подключён клиент (IP: {connClient.RemoteEndPoint})");
+                Console.WriteLine($"\n[{DateTime.Now}] [i] Подключён клиент (IP: {net.HideIP(((IPEndPoint)connClient.RemoteEndPoint).Address)}***)");
 
                 while (true)
                 {
@@ -106,7 +107,7 @@ public class YFSserver
                         }
                         catch (SocketException)
                         {
-                            Console.WriteLine($"[i] Клиент {connClient.RemoteEndPoint} отключился. Жду нового клиента");
+                            Console.WriteLine($"[i] Клиент {net.HideIP(((IPEndPoint)connClient.RemoteEndPoint).Address)} отключился. Жду нового клиента");
                             connClient.Close();
                             socket.Close();
                             break;
@@ -136,14 +137,14 @@ public class YFSserver
 
                     else if (cmd == "fileinfo")
                     {
-                        Console.WriteLine($"[{DateTime.Now}] [i] Получена команда: отправить информацию о файле");
+                        //Console.WriteLine($"[{DateTime.Now}] [i] Получена команда: отправить информацию о файле");
                         string file = Encoding.UTF8.GetString(net.getData(connClient));
                         io.getFileInfo(connClient, setDir+'/'+file);
                     }
 
                     else if (cmd == "closeconn")
                     {
-                        Console.WriteLine($"[{DateTime.Now}] [i] Клиент {connClient.RemoteEndPoint} отключился. Жду нового клиента");
+                        Console.WriteLine($"[{DateTime.Now}] [i] Клиент {net.HideIP(((IPEndPoint)connClient.RemoteEndPoint).Address)}*** отключился. Жду нового клиента");
                         connClient.Close();
                         socket.Close();
                         break;

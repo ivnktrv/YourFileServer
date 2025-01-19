@@ -147,7 +147,7 @@ public class YFSclient
                 }
             }
         }
-         catch (SocketException)
+        catch (SocketException)
         {
             Console.WriteLine("[-] Сервер отвёрг запрос на подключение или же он не в сети");
         }

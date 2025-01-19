@@ -3,6 +3,7 @@ using System.Net.Sockets;
 using System.Text;
 using yfs_security;
 using yfs_net;
+using System.Reflection.Metadata.Ecma335;
 
 namespace yfs_io;
 
@@ -10,6 +11,8 @@ public class YFSio
 {
     YFSsec sec = new();
     YFSnet net = new();
+
+    //private byte[] EVENT_END_OF_FILE_PACKET = { 0x3a, 0x45, 0x56, 0x45, 0x4e, 0x54, 0x3a, 0x3a, 0x59, 0x46, 0x53, 0x49, 0x4f, 0x3a, 0x3a, 0x45, 0x4e, 0x44, 0x5f, 0x4f, 0x46, 0x5f, 0x46, 0x49, 0x4c, 0x45 };
 
     public void getFiles(Socket __socket, string dirName)
     {
@@ -65,45 +68,58 @@ public class YFSio
             }
 
             BinaryReader b = new(File.Open(path, FileMode.Open));
-
+            
             if (isServer)
                 Console.WriteLine($"[{DateTime.Now}] [...] Подготовка к отправке файла: {file}");
 
-            byte[] getFileName = Encoding.UTF8.GetBytes(file);
+            // ----- ОТПРАВКА ИНФОРМАЦИИ О ФАЙЛЕ -----
+
+            byte[] getFileName = Encoding.UTF8.GetBytes(Path.GetFileName(file));
             byte[] getFileName_arrLength = { (byte)getFileName.Length };
             byte[] getFileLength = BitConverter.GetBytes(b.BaseStream.Length);
-            byte[] getFileLength_arrSize = { (byte)getFileLength.Length };
+            long packetCount = b.BaseStream.Length / 512;
+            int remainderBytes = (int)(b.BaseStream.Length % 512);
+            byte[] getPacketCount = BitConverter.GetBytes(packetCount);
+            byte[] getRemainderBytes = BitConverter.GetBytes(remainderBytes);
             b.Close();
             byte[] getFileChecksum = Encoding.UTF8.GetBytes(sec.checksumFileSHA256(path));
 
             __socket.Send(getFileName_arrLength);
             __socket.Send(getFileName);
-            __socket.Send(getFileLength_arrSize);
             __socket.Send(getFileLength);
             __socket.Send(getFileChecksum);
+            __socket.Send(getPacketCount);
+            __socket.Send(getRemainderBytes);
 
-            BinaryReader br = new(File.Open(path, FileMode.Open));
-            br.BaseStream.Position = 0;
+            // ------------------------------------------
 
             if (isServer)
                 Console.WriteLine($"[{DateTime.Now}] [...] Файл отправляется: {file}");
+            
+            BinaryReader br = new(File.Open(path, FileMode.Open));
+            br.BaseStream.Position = 0;
 
-            long c = 1024 * 180;
-            while (br.BaseStream.Position != br.BaseStream.Length)
+            long c = 0;
+            for (long i = 0; i <= packetCount; i++)
             {
-                byte[] readByte = { br.ReadByte() };
-                __socket.Send(readByte);
-                if (br.BaseStream.Position == c && !isServer)
+                byte[] data = br.ReadBytes(512);
+                __socket.Send(data);
+                if (!isServer && c % 8192 == 0)
                 {
                     clearTerminal();
-                    Console.WriteLine($"[UPLOAD] {Path.GetFileName(path)} [{br.BaseStream.Position / 1024} кб / {br.BaseStream.Length / 1024} кб]");
-                    c += 1024 * 180;
+                    Console.WriteLine($"[UPLOAD] {Path.GetFileName(path)} [{br.BaseStream.Position / 1024} kb / {br.BaseStream.Length / 1024} kb]");
                 }
+                c += 128;
+            }
+            if (remainderBytes != 0)
+            {
+                byte[] sendRemainderBytes = br.ReadBytes(remainderBytes);
+                __socket.Send(sendRemainderBytes);
             }
             br.Close();
 
             Console.WriteLine(isServer ? $"[{DateTime.Now}] [...] Проверка контрольной суммы"
-            : "[...] Проверка контрольной суммы");
+            : "\n[...] Проверка контрольной суммы");
 
             byte[] uploadedFileChecksum = new byte[64];
             __socket.Receive(uploadedFileChecksum);
@@ -203,34 +219,45 @@ public class YFSio
         byte[] getFileName = new byte[getFileNameArrayLength[0]];
         __socket.Receive(getFileName);
 
-        byte[] getFileArrayLength = new byte[1];
-        __socket.Receive(getFileArrayLength);
-        
-        byte[] getFileLength = new byte[getFileArrayLength[0]];
+        byte[] getFileLength = new byte[8];
         __socket.Receive(getFileLength);
 
         byte[] getFileChecksum = new byte[64];
         __socket.Receive(getFileChecksum);
 
-        string savePath = $"{saveFolder}/{Path.GetFileName(Encoding.UTF8.GetString(getFileName))}";
+        byte[] getCountPacket = new byte[8];
+        __socket.Receive(getCountPacket);
+
+        byte[] getReaminderBytes = new byte[4];
+        __socket.Receive(getReaminderBytes);
+
+        string savePath = $"{saveFolder}/{Encoding.UTF8.GetString(getFileName)}";
         using BinaryWriter br = new(File.Open(savePath, FileMode.OpenOrCreate));
         long fLength = BitConverter.ToInt64(getFileLength);
+        long packetCount = BitConverter.ToInt64(getCountPacket);
+        int remainderBytes = BitConverter.ToInt32(getReaminderBytes);
 
         if (isServer)
-            Console.WriteLine($"[{DateTime.Now}] [i] Принимаю файл: {Path.GetFileName(Encoding.UTF8.GetString(getFileName))}");
-        
-        long c = 1024*180;
-        while (br.BaseStream.Position != fLength)
+            Console.WriteLine($"[{DateTime.Now}] [i] Принимаю файл: {Encoding.UTF8.GetString(getFileName)}");
+
+        long c = 0;
+        for (long i = 0; i < packetCount; i++)
         {
-            byte[] wr = new byte[1];
-            __socket.Receive(wr);
-            br.Write(wr[0]);
-            if (br.BaseStream.Position == c && !isServer)
+            byte[] receiveData = new byte[512];
+            __socket.Receive(receiveData);
+            br.Write(receiveData);
+            if (!isServer && c % 8192 == 0)
             {
                 clearTerminal();
                 Console.WriteLine($"[DOWNLOAD] {Encoding.UTF8.GetString(getFileName)} [{br.BaseStream.Position / 1024} кб / {fLength / 1024} кб]");
-                c += 1024*180;
             }
+            c += 128;
+        }
+        if (remainderBytes != 0)
+        {
+            byte[] receiveRemainderBytes = new byte[remainderBytes];
+            __socket.Receive(receiveRemainderBytes);
+            br.Write(receiveRemainderBytes);
         }
         br.Close();
 
@@ -239,7 +266,7 @@ public class YFSio
         __socket.Send(downloadedFileChecksum_bytes);
 
         Console.WriteLine(isServer ? $"[{DateTime.Now}] [...] Проверка контрольной суммы" 
-            : "[...] Проверка контрольной суммы");
+            : "\n[...] Проверка контрольной суммы");
         if (downloadedFileChecksum != Encoding.UTF8.GetString(getFileChecksum))
         {
             if (!isServer)
@@ -307,15 +334,24 @@ public class YFSio
                 """);
             }
         }
-        if (!isServer)
+        if (!isServer && Encoding.UTF8.GetString(getFileName)[^4..] == ".enc")
         {
             try
             {
-                Dictionary<string, string> getKey = readStartupFile($"{((IPEndPoint)__socket.RemoteEndPoint).Address}.keytable");
-                sec.decryptFile(savePath, getKey[Path.GetFileName(Encoding.UTF8.GetString(getFileName))]);
+                Dictionary<string, string> getKey = readConfigFile($"{((IPEndPoint)__socket.RemoteEndPoint).Address}.keytable");
+                sec.decryptFile(savePath, getKey[Encoding.UTF8.GetString(getFileName)]);
                 File.Delete(savePath);
             }
-            catch (KeyNotFoundException) { }
+            catch (KeyNotFoundException)
+            {
+                Console.Write("[-] Ключ от данного файла не найден в таблице сохранённых ключей (.keytable). Если у вас есть ключ от этого файла, введите в это поле: ");
+                string key = Console.ReadLine();
+                if (key != "")
+                {
+                    sec.decryptFile(savePath, key);
+                    File.Delete(savePath);
+                }
+            }
         }
     }
 
@@ -375,17 +411,12 @@ public class YFSio
         fs.Write(Encoding.UTF8.GetBytes($"{Path.GetFileName(file)}={key}\n"));  
     }
 
-    public string readKeytableFile(string path)
-    {
-        return "";
-    }
-
-    public Dictionary<string, string>? readStartupFile(string startupFile)
+    public Dictionary<string, string>? readConfigFile(string configFile)
     {
         Dictionary<string, string>? data = [];
         try
         {
-            foreach (string line in File.ReadAllLines(startupFile))
+            foreach (string line in File.ReadAllLines(configFile))
             {
                 string _key = "";
                 string _value = "";
