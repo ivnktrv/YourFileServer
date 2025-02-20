@@ -3,7 +3,6 @@ using System.Net.Sockets;
 using System.Text;
 using yfs_security;
 using yfs_net;
-using System.Reflection.Metadata.Ecma335;
 
 namespace yfs_io;
 
@@ -12,7 +11,7 @@ public class YFSio
     YFSsec sec = new();
     YFSnet net = new();
 
-    //private byte[] EVENT_END_OF_FILE_PACKET = { 0x3a, 0x45, 0x56, 0x45, 0x4e, 0x54, 0x3a, 0x3a, 0x59, 0x46, 0x53, 0x49, 0x4f, 0x3a, 0x3a, 0x45, 0x4e, 0x44, 0x5f, 0x4f, 0x46, 0x5f, 0x46, 0x49, 0x4c, 0x45 };
+    private readonly int PACKET_SIZE = 512;
 
     public void getFiles(Socket __socket, string dirName)
     {
@@ -77,8 +76,8 @@ public class YFSio
             byte[] getFileName = Encoding.UTF8.GetBytes(Path.GetFileName(file));
             byte[] getFileName_arrLength = { (byte)getFileName.Length };
             byte[] getFileLength = BitConverter.GetBytes(b.BaseStream.Length);
-            long packetCount = b.BaseStream.Length / 512;
-            int remainderBytes = (int)(b.BaseStream.Length % 512);
+            long packetCount = b.BaseStream.Length / PACKET_SIZE;
+            int remainderBytes = (int)(b.BaseStream.Length % PACKET_SIZE);
             byte[] getPacketCount = BitConverter.GetBytes(packetCount);
             byte[] getRemainderBytes = BitConverter.GetBytes(remainderBytes);
             b.Close();
@@ -102,7 +101,7 @@ public class YFSio
             long c = 0;
             for (long i = 0; i <= packetCount; i++)
             {
-                byte[] data = br.ReadBytes(512);
+                byte[] data = br.ReadBytes(PACKET_SIZE);
                 __socket.Send(data);
                 if (!isServer && c % 8192 == 0)
                 {
@@ -243,7 +242,7 @@ public class YFSio
         long c = 0;
         for (long i = 0; i < packetCount; i++)
         {
-            byte[] receiveData = new byte[512];
+            byte[] receiveData = new byte[PACKET_SIZE];
             __socket.Receive(receiveData);
             br.Write(receiveData);
             if (!isServer && c % 8192 == 0)

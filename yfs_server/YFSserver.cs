@@ -49,11 +49,12 @@ public class YFSserver
         Console.WriteLine($"##### IP: {setIP}, PORT: {setPort} #####\n");
         Console.WriteLine($"[{DateTime.Now}] [i] Ожидаю подключения");
 
+        Socket socket = net.createServer(setIP, setPort);
+
         while (true)
         {
             while (true)
             {
-                Socket socket = net.createServer(setIP, setPort);
                 Socket connClient = socket.Accept();
 
                 try
@@ -78,78 +79,85 @@ public class YFSserver
 
                 Console.WriteLine($"\n[{DateTime.Now}] [i] Подключён клиент (IP: {net.HideIP(((IPEndPoint)connClient.RemoteEndPoint).Address)}***)");
 
-                while (true)
+                Task.Run(() =>
                 {
-                    byte[] getCommand = net.getData(connClient);
-                    string cmd = Encoding.UTF8.GetString(getCommand);
+                    YFSnet net = new();
+                    YFSio io = new();
+                    YFSsec sec = new();
 
-                    if (cmd == "list")
+                    while (true)
                     {
-                        //Console.WriteLine($"[{DateTime.Now}] [i] Получена команда: отправить список файлов");
-                        io.getFiles(connClient, setDir);
-                    }
+                        byte[] getCommand = net.getData(connClient);
+                        string cmd = Encoding.UTF8.GetString(getCommand);
 
-                    else if (cmd == "upload")
-                    {
-                        Console.WriteLine($"[{DateTime.Now}] [i] Получена команда: загрузить файл на сервер");
-                        io.downloadFile(connClient, setDir, isServer: true);
-                    }
-
-                    else if (cmd == "download")
-                    {
-                        Console.WriteLine($"[{DateTime.Now}] [i] Получена команда: скачать файл с сервера");
-                        byte[] getFileName_bytes = net.getData(connClient);
-                        string getFileName = Encoding.UTF8.GetString(getFileName_bytes);
-
-                        try
+                        if (cmd == "list")
                         {
-                            io.uploadFile(connClient, getFileName, folder: setDir, isServer: true);
+                            io.getFiles(connClient, setDir);
                         }
-                        catch (SocketException)
+
+                        else if (cmd == "upload")
                         {
-                            Console.WriteLine($"[i] Клиент {net.HideIP(((IPEndPoint)connClient.RemoteEndPoint).Address)} отключился. Жду нового клиента");
+                            Console.WriteLine($"[{DateTime.Now}] [i] Получена команда: загрузить файл на сервер");
+                            io.downloadFile(connClient, setDir, isServer: true);
+                        }
+
+                        else if (cmd == "download")
+                        {
+                            Console.WriteLine($"[{DateTime.Now}] [i] Получена команда: скачать файл с сервера");
+                            byte[] getFileName_bytes = net.getData(connClient);
+                            string getFileName = Encoding.UTF8.GetString(getFileName_bytes);
+
+                            try
+                            {
+                                io.uploadFile(connClient, getFileName, folder: setDir, isServer: true);
+                            }
+                            catch (SocketException)
+                            {
+                                Console.WriteLine($"[i] Клиент {net.HideIP(((IPEndPoint)connClient.RemoteEndPoint).Address)} отключился. Жду нового клиента");
+                                connClient.Close();
+                                socket.Close();
+                                break;
+                            }
+                        }
+
+                        else if (cmd == "delete")
+                        {
+                            Console.WriteLine($"[{DateTime.Now}] [i] Получена команда: удалить файл с сервера");
+                            byte[] getDelFile = net.getData(connClient);
+
+                            File.Delete($"{setDir}/{Encoding.UTF8.GetString(getDelFile)}");
+                            Console.WriteLine($"[{DateTime.Now}] [i] Файл удалён: {Encoding.UTF8.GetString(getDelFile)}");
+                        }
+
+                        else if (cmd == "cd")
+                        {
+                            Console.WriteLine($"[{DateTime.Now}] [i] Получена команда: перейти в каталог");
+                            byte[] getDir_bytes = net.getData(connClient);
+                            string getDir = Encoding.UTF8.GetString(getDir_bytes);
+
+                            if (getDir == "/" || getDir == ".." || getDir.Contains(".."))
+                                setDir = rootDir;
+                            else
+                                setDir += "/" + getDir;
+                        }
+
+                        else if (cmd == "fileinfo")
+                        {
+                            //Console.WriteLine($"[{DateTime.Now}] [i] Получена команда: отправить информацию о файле");
+                            string file = Encoding.UTF8.GetString(net.getData(connClient));
+                            io.getFileInfo(connClient, setDir + '/' + file);
+                        }
+
+                        else if (cmd == "closeconn")
+                        {
+                            Console.WriteLine($"[{DateTime.Now}] [i] Клиент {net.HideIP(((IPEndPoint)connClient.RemoteEndPoint).Address)}*** отключился. Жду нового клиента");
                             connClient.Close();
-                            socket.Close();
+                            //socket.Close();
                             break;
                         }
                     }
-
-                    else if (cmd == "delete")
-                    {
-                        Console.WriteLine($"[{DateTime.Now}] [i] Получена команда: удалить файл с сервера");
-                        byte[] getDelFile = net.getData(connClient);
-
-                        File.Delete($"{setDir}/{Encoding.UTF8.GetString(getDelFile)}");
-                        Console.WriteLine($"[{DateTime.Now}] [i] Файл удалён: {Encoding.UTF8.GetString(getDelFile)}");
-                    }
-
-                    else if (cmd == "cd")
-                    {
-                        Console.WriteLine($"[{DateTime.Now}] [i] Получена команда: перейти в каталог");
-                        byte[] getDir_bytes = net.getData(connClient);
-                        string getDir = Encoding.UTF8.GetString(getDir_bytes);
-
-                        if (getDir == "/" || getDir == ".." || getDir.Contains(".."))
-                            setDir = rootDir;
-                        else
-                            setDir += "/" + getDir;
-                    }
-
-                    else if (cmd == "fileinfo")
-                    {
-                        //Console.WriteLine($"[{DateTime.Now}] [i] Получена команда: отправить информацию о файле");
-                        string file = Encoding.UTF8.GetString(net.getData(connClient));
-                        io.getFileInfo(connClient, setDir+'/'+file);
-                    }
-
-                    else if (cmd == "closeconn")
-                    {
-                        Console.WriteLine($"[{DateTime.Now}] [i] Клиент {net.HideIP(((IPEndPoint)connClient.RemoteEndPoint).Address)}*** отключился. Жду нового клиента");
-                        connClient.Close();
-                        socket.Close();
-                        break;
-                    }
-                }
+                   
+                });
             }
         }
     }
