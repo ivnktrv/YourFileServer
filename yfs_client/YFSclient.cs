@@ -61,9 +61,12 @@ public class YFSclient
                 ----------------------------------------------
                  ДИРЕКТОРИЯ: {currentDir}
                 
-                 [1] Скачать файл       [2] Загрузить файл
-                 [3] Удалить файл       [4] Перейти в каталог
-                 [5] Отключиться        [F] Информация о файле
+                 [1] Скачать файл        [4] Создать директорию 
+                 [2] Загрузить файл      [5] Перейти в директорию
+                 [3] Удалить файл        [6] Удалить директорию
+                 [F] Информация о файле  [7] Отключиться
+                 
+                        [any] Обновить список файлов
 
                 -> 
                 """);
@@ -104,15 +107,27 @@ public class YFSclient
 
                 else if (key.Key == ConsoleKey.NumPad3 || key.Key == ConsoleKey.D3)
                 {
-                    net.sendData(socket, "delete");
+                    net.sendData(socket, "deletefile");
 
                     Console.Write("\nКакой файл удалить?: ");
                     string delFile = Console.ReadLine();
-
-                    net.sendData(socket, delFile);
+                    Console.Write("Подтвердить удаление? [y/n]: ");
+                    ConsoleKeyInfo k = Console.ReadKey();
+                    if (k.Key == ConsoleKey.Y)
+                        net.sendData(socket, delFile);
+                    else
+                        net.sendData(socket, "deletefile:abort");
                 }
 
-                else if (key.Key == ConsoleKey.NumPad4 || key.Key == ConsoleKey.D5)
+                else if (key.Key == ConsoleKey.NumPad4 || key.Key == ConsoleKey.D4)
+                {
+                    net.sendData(socket, "createdir");
+                    Console.Write("\nВведите имя директории: ");
+                    string createDir = Console.ReadLine();
+                    net.sendData(socket, createDir);
+                }
+
+                else if (key.Key == ConsoleKey.NumPad5 || key.Key == ConsoleKey.D5)
                 {
                     net.sendData(socket, "cd");
 
@@ -126,7 +141,20 @@ public class YFSclient
                         currentDir = changeDir;
                 }
 
-                else if (key.Key == ConsoleKey.NumPad5 || key.Key == ConsoleKey.D6)
+                else if (key.Key == ConsoleKey.NumPad6 || key.Key == ConsoleKey.D6)
+                {
+                    net.sendData(socket, "deletedir");
+                    Console.Write("\nКакую директорию удалить?: ");
+                    string delDir = Console.ReadLine();
+                    Console.Write("Подтвердить удаление? [y/n]: ");
+                    ConsoleKeyInfo k = Console.ReadKey();
+                    if (k.Key == ConsoleKey.Y)
+                        net.sendData(socket, delDir);
+                    else
+                        net.sendData(socket, "deletedir:abort");
+                }
+
+                else if (key.Key == ConsoleKey.NumPad7 || key.Key == ConsoleKey.D7)
                 {
                     net.sendData(socket, "closeconn");
                     socket.Close();
@@ -147,7 +175,7 @@ public class YFSclient
                 }
             }
         }
-         catch (SocketException)
+        catch (SocketException)
         {
             Console.WriteLine("[-] Сервер отвёрг запрос на подключение или же он не в сети");
         }
