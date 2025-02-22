@@ -1,4 +1,25 @@
-﻿using System.Net;
+﻿//
+// Класс YFSio предназначен для выполнения операций ввода-вывода в файловой системе и взаимодействия по сети.
+// Он включает в себя следующие основные методы:
+//
+// • getFiles: Асинхронно получает список файлов и директорий в указанной
+// директории и отправляет их по сокету.
+//
+// • uploadFile: Асинхронно загружает файл на сервер, с возможностью шифрования.
+//
+// • downloadFile: Асинхронно скачивает файл с сервера
+// и сохраняет его в указанную директорию.
+//
+// • getFileInfo: Асинхронно получает информацию о файле и отправляет её по сокету.
+//
+// • writeKeytableFile: Записывает ключ шифрования для файла в таблицу ключей.
+//
+// • readConfigFile: Читает конфигурационный файл и возвращает данные в виде словаря.
+//
+// • clearTerminal: Очищает терминал.
+//
+
+using System.Net;
 using System.Net.Sockets;
 using System.Text;
 using yfs_security;
@@ -13,7 +34,13 @@ public class YFSio
 
     private readonly int PACKET_SIZE = 512;
 
-    public void getFiles(Socket __socket, string dirName)
+    /// <summary>
+    /// Получение списка файлов и директорий в указанной директории
+    /// </summary>
+    /// <param name="__socket"></param>
+    /// <param name="dirName"></param>
+    /// <returns></returns>
+    public async Task getFiles(Socket __socket, string dirName)
     {
         try
         {
@@ -22,32 +49,41 @@ public class YFSio
 
             foreach (string getDir in dirs)
             {
-                net.sendData(__socket, "(DIR) " + new DirectoryInfo(getDir).Name);
+                await net.sendDataAsync(__socket, "(DIR) " + new DirectoryInfo(getDir).Name);
             }
 
             foreach (string getFile in files)
             {
-                net.sendData(__socket, Path.GetFileName(getFile));
+                await net.sendDataAsync(__socket, Path.GetFileName(getFile));
             }
 
-            net.sendData(__socket, ":END_OF_LIST");
+            await net.sendDataAsync(__socket, ":END_OF_LIST");
         }
         catch (DirectoryNotFoundException)
         {
             Console.WriteLine($"[{DateTime.Now}] [-] Директория не найдена: {dirName}");
-            net.sendData(__socket, $"\nДиректории {dirName} не существует. Чтобы выйти, смените директорию на /");
-            net.sendData(__socket, ":END_OF_LIST");
+            await net.sendDataAsync(__socket, $"\nДиректории {dirName} не существует. Чтобы выйти, смените директорию на /");
+            await net.sendDataAsync(__socket, ":END_OF_LIST");
 
         }
         catch (IOException)
         {
             Console.WriteLine($"[{DateTime.Now}] [-] Некорректное имя директории: {dirName}");
-            net.sendData(__socket, $"Некорректное имя директории: {dirName}. Чтобы выйти, смените директорию на /");
-            net.sendData(__socket, ":END_OF_LIST");
+            await net.sendDataAsync(__socket, $"Некорректное имя директории: {dirName}. Чтобы выйти, смените директорию на /");
+            await net.sendDataAsync(__socket, ":END_OF_LIST");
         }
     }
 
-    public void uploadFile(Socket __socket, string file, 
+    /// <summary>
+    /// Загрузка файла на сервер / клиент
+    /// </summary>
+    /// <param name="__socket"></param>
+    /// <param name="file"></param>
+    /// <param name="folder"></param>
+    /// <param name="isServer"></param>
+    /// <param name="encryptFile"></param>
+    /// <returns></returns>
+    public async Task uploadFile(Socket __socket, string file, 
         string? folder = null, bool isServer = false, bool encryptFile = false)
     {
         try
@@ -83,12 +119,12 @@ public class YFSio
             b.Close();
             byte[] getFileChecksum = Encoding.UTF8.GetBytes(sec.checksumFileSHA256(path));
 
-            __socket.Send(getFileName_arrLength);
-            __socket.Send(getFileName);
-            __socket.Send(getFileLength);
-            __socket.Send(getFileChecksum);
-            __socket.Send(getPacketCount);
-            __socket.Send(getRemainderBytes);
+            await __socket.SendAsync(getFileName_arrLength);
+            await __socket.SendAsync(getFileName);
+            await __socket.SendAsync(getFileLength);
+            await __socket.SendAsync(getFileChecksum);
+            await __socket.SendAsync(getPacketCount);
+            await __socket.SendAsync(getRemainderBytes);
 
             // ------------------------------------------
 
@@ -102,7 +138,7 @@ public class YFSio
             for (long i = 0; i <= packetCount; i++)
             {
                 byte[] data = br.ReadBytes(PACKET_SIZE);
-                __socket.Send(data);
+                await __socket.SendAsync(data);
                 if (!isServer && c % 8192 == 0)
                 {
                     clearTerminal();
@@ -113,7 +149,7 @@ public class YFSio
             if (remainderBytes != 0)
             {
                 byte[] sendRemainderBytes = br.ReadBytes(remainderBytes);
-                __socket.Send(sendRemainderBytes);
+                await __socket.SendAsync(sendRemainderBytes);
             }
             br.Close();
 
@@ -121,7 +157,7 @@ public class YFSio
             : "\n[...] Проверка контрольной суммы");
 
             byte[] uploadedFileChecksum = new byte[64];
-            __socket.Receive(uploadedFileChecksum);
+            await __socket.ReceiveAsync(uploadedFileChecksum);
 
             if (Encoding.UTF8.GetString(getFileChecksum) != Encoding.UTF8.GetString(uploadedFileChecksum))
             {
@@ -144,13 +180,13 @@ public class YFSio
                     if (key.Key == ConsoleKey.NumPad1 || key.Key == ConsoleKey.D1)
                     {
                         byte[] sendAnswer = { 1 };
-                        __socket.Send(sendAnswer);
+                        await __socket.SendAsync(sendAnswer);
                     }
 
                     else
                     {
                         byte[] sendAnswer = { 0 };
-                        __socket.Send(sendAnswer);
+                        await __socket.SendAsync(sendAnswer);
                     }
                 }
                 else
@@ -193,21 +229,28 @@ public class YFSio
         {
             Console.WriteLine($"[{DateTime.Now}] [-] Файл не найден: {file}");
             byte[] getFileName_arrLengthZero = { 0 };
-            __socket.Send(getFileName_arrLengthZero);
+            await __socket.SendAsync(getFileName_arrLengthZero);
         }
         catch (IOException)
         {
             Console.WriteLine($"[{DateTime.Now}] [-] Некорректное имя файла: {file}. Отменяю отправку");
             byte[] getFileName_arrLengthZero = { 0 };
-            __socket.Send(getFileName_arrLengthZero);
+            await __socket.SendAsync(getFileName_arrLengthZero);
         }
     }
 
-    public void downloadFile(Socket __socket, string saveFolder, 
+    /// <summary>
+    /// Скачивание файла с сервера / клиента
+    /// </summary>
+    /// <param name="__socket"></param>
+    /// <param name="saveFolder"></param>
+    /// <param name="isServer"></param>
+    /// <returns></returns>
+    public async Task downloadFile(Socket __socket, string saveFolder, 
         bool isServer = false)
     {
         byte[] getFileNameArrayLength = new byte[1];
-        __socket.Receive(getFileNameArrayLength);
+        await __socket.ReceiveAsync(getFileNameArrayLength);
 
         if (getFileNameArrayLength[0] == 0)
         {
@@ -216,19 +259,19 @@ public class YFSio
         }
 
         byte[] getFileName = new byte[getFileNameArrayLength[0]];
-        __socket.Receive(getFileName);
+        await __socket.ReceiveAsync(getFileName);
 
         byte[] getFileLength = new byte[8];
-        __socket.Receive(getFileLength);
+        await __socket.ReceiveAsync(getFileLength);
 
         byte[] getFileChecksum = new byte[64];
-        __socket.Receive(getFileChecksum);
+        await __socket.ReceiveAsync(getFileChecksum);
 
         byte[] getCountPacket = new byte[8];
-        __socket.Receive(getCountPacket);
+        await __socket.ReceiveAsync(getCountPacket);
 
         byte[] getReaminderBytes = new byte[4];
-        __socket.Receive(getReaminderBytes);
+        await __socket.ReceiveAsync(getReaminderBytes);
 
         string savePath = $"{saveFolder}/{Encoding.UTF8.GetString(getFileName)}";
         using BinaryWriter br = new(File.Open(savePath, FileMode.OpenOrCreate));
@@ -243,7 +286,7 @@ public class YFSio
         for (long i = 0; i < packetCount; i++)
         {
             byte[] receiveData = new byte[PACKET_SIZE];
-            __socket.Receive(receiveData);
+            await __socket.ReceiveAsync(receiveData);
             br.Write(receiveData);
             if (!isServer && c % 8192 == 0)
             {
@@ -255,14 +298,14 @@ public class YFSio
         if (remainderBytes != 0)
         {
             byte[] receiveRemainderBytes = new byte[remainderBytes];
-            __socket.Receive(receiveRemainderBytes);
+            await __socket.ReceiveAsync(receiveRemainderBytes);
             br.Write(receiveRemainderBytes);
         }
         br.Close();
-
+        
         string downloadedFileChecksum = sec.checksumFileSHA256(savePath);
         byte[] downloadedFileChecksum_bytes = Encoding.UTF8.GetBytes(downloadedFileChecksum);
-        __socket.Send(downloadedFileChecksum_bytes);
+        await __socket.SendAsync(downloadedFileChecksum_bytes);
 
         Console.WriteLine(isServer ? $"[{DateTime.Now}] [...] Проверка контрольной суммы" 
             : "\n[...] Проверка контрольной суммы");
@@ -304,10 +347,10 @@ public class YFSio
                     """);
 
                 byte[] wrongHash = Encoding.UTF8.GetBytes(downloadedFileChecksum);
-                __socket.Send(wrongHash);
+                await __socket.SendAsync(wrongHash);
 
                 byte[] getAnswer = new byte[1];
-                __socket.Receive(getAnswer);
+                await __socket.ReceiveAsync(getAnswer);
 
                 if (getAnswer[0] == 1)
                 {
@@ -354,7 +397,13 @@ public class YFSio
         }
     }
 
-    public void getFileInfo(Socket __socket, string path)
+    /// <summary>
+    /// Получение информации о файле
+    /// </summary>
+    /// <param name="__socket"></param>
+    /// <param name="path"></param>
+    /// <returns></returns>
+    public async Task getFileInfo(Socket __socket, string path)
     {
         try
         {
@@ -369,16 +418,22 @@ public class YFSio
             """;
 
             byte[] sendData = Encoding.UTF8.GetBytes(data);
-            __socket.Send(sendData);
+            await __socket.SendAsync(sendData);
         }
         catch (FileNotFoundException)
         {
             string fileNotFound = "Файл не найден";
             byte[] b = Encoding.UTF8.GetBytes(fileNotFound);
-            __socket.Send(b);
+            await __socket.SendAsync(b);
         }
     }
 
+    /// <summary>
+    /// Запись ключа шифрования в таблицу ключей
+    /// </summary>
+    /// <param name="__socket"></param>
+    /// <param name="key"></param>
+    /// <param name="file"></param>
     public void writeKeytableFile(Socket __socket, string key, string file)
     {
         List<string> lines = new List<string>();
@@ -410,6 +465,11 @@ public class YFSio
         fs.Write(Encoding.UTF8.GetBytes($"{Path.GetFileName(file)}={key}\n"));  
     }
 
+    /// <summary>
+    /// Чтение конфигурационного файла
+    /// </summary>
+    /// <param name="configFile"></param>
+    /// <returns></returns>
     public Dictionary<string, string>? readConfigFile(string configFile)
     {
         Dictionary<string, string>? data = [];
@@ -450,6 +510,9 @@ public class YFSio
         }
     }
 
+    /// <summary>
+    /// Очистка терминала
+    /// </summary>
     public void clearTerminal()
     {
         Console.Clear();
