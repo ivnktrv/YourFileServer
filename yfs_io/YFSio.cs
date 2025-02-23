@@ -117,7 +117,7 @@ public class YFSio
             byte[] getPacketCount = BitConverter.GetBytes(packetCount);
             byte[] getRemainderBytes = BitConverter.GetBytes(remainderBytes);
             b.Close();
-            byte[] getFileChecksum = Encoding.UTF8.GetBytes(sec.checksumFileSHA256(path));
+            byte[] getFileChecksum = Encoding.UTF8.GetBytes(await sec.checksumFileSHA256(path));
 
             await __socket.SendAsync(getFileName_arrLength);
             await __socket.SendAsync(getFileName);
@@ -148,6 +148,7 @@ public class YFSio
             }
             if (remainderBytes != 0)
             {
+                br.BaseStream.Position = br.BaseStream.Length - remainderBytes;
                 byte[] sendRemainderBytes = br.ReadBytes(remainderBytes);
                 await __socket.SendAsync(sendRemainderBytes);
             }
@@ -278,9 +279,12 @@ public class YFSio
         long fLength = BitConverter.ToInt64(getFileLength);
         long packetCount = BitConverter.ToInt64(getCountPacket);
         int remainderBytes = BitConverter.ToInt32(getReaminderBytes);
+        string fileChecksum = Encoding.UTF8.GetString(getFileChecksum);
 
         if (isServer)
             Console.WriteLine($"[{DateTime.Now}] [i] Принимаю файл: {Encoding.UTF8.GetString(getFileName)}");
+
+
 
         long c = 0;
         for (long i = 0; i < packetCount; i++)
@@ -297,19 +301,20 @@ public class YFSio
         }
         if (remainderBytes != 0)
         {
+            //br.BaseStream.Position = fLength - remainderBytes;
             byte[] receiveRemainderBytes = new byte[remainderBytes];
             await __socket.ReceiveAsync(receiveRemainderBytes);
             br.Write(receiveRemainderBytes);
         }
         br.Close();
         
-        string downloadedFileChecksum = sec.checksumFileSHA256(savePath);
+        string downloadedFileChecksum = await sec.checksumFileSHA256(savePath);
         byte[] downloadedFileChecksum_bytes = Encoding.UTF8.GetBytes(downloadedFileChecksum);
         await __socket.SendAsync(downloadedFileChecksum_bytes);
 
         Console.WriteLine(isServer ? $"[{DateTime.Now}] [...] Проверка контрольной суммы" 
             : "\n[...] Проверка контрольной суммы");
-        if (downloadedFileChecksum != Encoding.UTF8.GetString(getFileChecksum))
+        if (downloadedFileChecksum != fileChecksum)
         {
             if (!isServer)
             {
@@ -319,7 +324,7 @@ public class YFSio
                 SHA-256:
                     {downloadedFileChecksum} (скачанный файл) 
                                 !=
-                    {Encoding.UTF8.GetString(getFileChecksum)} (файл на сервере)
+                    {fileChecksum} (файл на сервере)
             
                 [1] Удалить файл  [2] Оставить
             
@@ -342,7 +347,7 @@ public class YFSio
                     SHA-256:
                         {downloadedFileChecksum} (скачанный файл)
                                     !=
-                        {Encoding.UTF8.GetString(getFileChecksum)} (файл на клиенте)
+                        {fileChecksum} (файл на клиенте)
                     
                     """);
 
@@ -371,7 +376,7 @@ public class YFSio
                 SHA-256:
                     {downloadedFileChecksum} (скачанный файл)
                                     =
-                    {Encoding.UTF8.GetString(getFileChecksum)} (файл на клиенте)
+                    {fileChecksum} (файл на клиенте)
                 
                 """);
             }
