@@ -13,6 +13,7 @@
 using System.Net.Sockets;
 using System.Text;
 using System.Net;
+using System.Diagnostics;
 
 namespace yfs_net;
 
@@ -90,7 +91,7 @@ public class YFSnet
             await __socket.SendAsync(buffLength);
             await __socket.SendAsync(buff);
         }
-        catch (SocketException)
+        catch (SocketException ex)
         {
             Console.WriteLine("\nСервер отключился");
         }
@@ -110,7 +111,7 @@ public class YFSnet
             __socket.Send(buffLength);
             __socket.Send(buff);
         }
-        catch (SocketException)
+        catch (SocketException ex)
         {
             Console.WriteLine("\nСервер отключился");
         }
@@ -132,9 +133,9 @@ public class YFSnet
 
             return buff;
         }
-        catch (SocketException)
+        catch (SocketException ex)
         {
-            return Encoding.UTF8.GetBytes("closeconn");
+            return Encoding.UTF8.GetBytes("closeconn");;
         }
     }
 
@@ -154,7 +155,7 @@ public class YFSnet
 
             return buff;
         }
-        catch (SocketException)
+        catch (SocketException ex)
         {
             return Encoding.UTF8.GetBytes("closeconn");
         }

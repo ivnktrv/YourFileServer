@@ -12,9 +12,10 @@ public class YFSclient
     YFSnet net = new();
     YFSsec sec = new();
 
-    public void run()
+    public void Run()
     {
         io.clearTerminal();
+
         Console.Write("Укажите IP: ");
         string ip = Console.ReadLine();
         Console.Write("Укажите порт: ");
@@ -28,10 +29,13 @@ public class YFSclient
             byte[] getAnswer = new byte[1];
             socket.Receive(getAnswer);
 
-            if (getAnswer[0] == 1) { }
+            if (getAnswer[0] == 1) 
+            { 
+            }
             else
             {
                 Console.WriteLine("\n[-] Логин или пароль неверный. Возможно, сервер изменил данные для входа");
+
                 socket.Close();
                 return;
             }
@@ -41,13 +45,13 @@ public class YFSclient
             {
                 Console.Clear();
                 Console.WriteLine("\x1b[3J");
+
+                net.sendData(socket, "list");
+
                 Console.WriteLine($"""
                 ----------------------------------------------
                 
                 """);
-
-                net.sendData(socket, "list");
-
                 while (true)
                 {
                     byte[] buff = net.getData(socket);
@@ -122,8 +126,10 @@ public class YFSclient
                 else if (key.Key == ConsoleKey.NumPad4 || key.Key == ConsoleKey.D4)
                 {
                     net.sendData(socket, "createdir");
+
                     Console.Write("\nВведите имя директории: ");
                     string createDir = Console.ReadLine();
+                    
                     net.sendData(socket, createDir);
                 }
 
@@ -135,6 +141,7 @@ public class YFSclient
                     string changeDir = Console.ReadLine();
 
                     net.sendData(socket, changeDir);
+                    
                     if (changeDir == "..")
                         currentDir = "/";
                     else
@@ -144,19 +151,26 @@ public class YFSclient
                 else if (key.Key == ConsoleKey.NumPad6 || key.Key == ConsoleKey.D6)
                 {
                     net.sendData(socket, "deletedir");
+                    
                     Console.Write("\nКакую директорию удалить?: ");
                     string delDir = Console.ReadLine();
                     Console.Write("Подтвердить удаление? [y/n]: ");
                     ConsoleKeyInfo k = Console.ReadKey();
+
                     if (k.Key == ConsoleKey.Y)
+                    {
                         net.sendData(socket, delDir);
+                    }
                     else
+                    {
                         net.sendData(socket, "deletedir:abort");
+                    }
                 }
 
                 else if (key.Key == ConsoleKey.NumPad7 || key.Key == ConsoleKey.D7)
                 {
                     net.sendData(socket, "closeconn");
+                    
                     socket.Close();
                     break;
                 }
@@ -164,6 +178,7 @@ public class YFSclient
                 else if (key.Key == ConsoleKey.F)
                 {
                     net.sendData(socket, "fileinfo");
+
                     Console.Write("\nФайл: ");
                     net.sendData(socket, Console.ReadLine());
 
@@ -181,3 +196,29 @@ public class YFSclient
         }
     }
 }
+
+
+
+
+/*
+ #region sendData
+ if (debugMode) net.sendData(socket, Console.ReadLine(), debugMode: true);
+ else net.sendData(socket, Console.ReadLine());
+ #endregion
+ */
+
+
+
+
+
+
+
+
+
+
+
+
+
+#region
+// блядь я заебался добавлять дебаг мод сукааааа (помогите)
+#endregion

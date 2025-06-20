@@ -35,9 +35,9 @@ public class YFSserver
     private string setIP;
     private int setPort;
 
-    public void run()
+    public void Run()
     {
-        #region чтение файла .startup
+        #region reading file .startup
         io.clearTerminal();
         Dictionary<string, string>? startupConfig = io.readConfigFile($"yfs_{Environment.MachineName}.startup");
 
@@ -62,7 +62,6 @@ public class YFSserver
         
         setDir = rootDir;
 
-        io.clearTerminal();
         Console.WriteLine($"##### IP: {setIP}, PORT: {setPort} #####\n");
         Console.WriteLine($"[{DateTime.Now}] [i] Ожидаю подключения");
 
@@ -89,7 +88,6 @@ public class YFSserver
                         connClient.Send(a);
                         connClient.Close();
                         connClient.Dispose();
-                        //socket.Close();
                         break;
                     }
                 }
@@ -97,33 +95,34 @@ public class YFSserver
 
                 Console.WriteLine($"\n[{DateTime.Now}] [i] Подключён клиент (IP: {sec.HideIP(((IPEndPoint)connClient.RemoteEndPoint).Address)}***)");
 
-                Task.Run(async () =>
+                Task.Run(() =>
                 {
                     while (true)
                     {
-                        byte[] getCommand = await net.getDataAsync(connClient);
+                        byte[] getCommand = net.getData(connClient);
                         string cmd = Encoding.UTF8.GetString(getCommand);
 
                         if (cmd == "list")
                         {
-                            await io.getFiles(connClient, setDir);
+                            Thread.Sleep(100);
+                            io.getFiles(connClient, setDir);
                         }
 
                         else if (cmd == "upload")
                         {
                             Console.WriteLine($"[{DateTime.Now}] [i] Получена команда: загрузить файл на сервер");
-                            await io.downloadFile(connClient, setDir, isServer: true);
+                            io.downloadFile(connClient, setDir, isServer: true);
                         }
 
                         else if (cmd == "download")
                         {
                             Console.WriteLine($"[{DateTime.Now}] [i] Получена команда: скачать файл с сервера");
-                            byte[] getFileName_bytes = await net.getDataAsync(connClient);
+                            byte[] getFileName_bytes = net.getData(connClient);
                             string getFileName = Encoding.UTF8.GetString(getFileName_bytes);
 
                             try
                             {
-                                await io.uploadFile(connClient, getFileName, folder: setDir, isServer: true);
+                                io.uploadFile(connClient, getFileName, folder: setDir, isServer: true);
                             }
                             catch (SocketException)
                             {
@@ -137,7 +136,7 @@ public class YFSserver
                         else if (cmd == "deletefile")
                         {
                             Console.WriteLine($"[{DateTime.Now}] [i] Получена команда: удалить файл с сервера");
-                            byte[] getDelFile = await net.getDataAsync(connClient);
+                            byte[] getDelFile = net.getData(connClient);
                             string delFile = Encoding.UTF8.GetString(getDelFile);
 
                             if (delFile == "deletefile:abort")
@@ -161,7 +160,7 @@ public class YFSserver
                         else if (cmd == "cd")
                         {
                             Console.WriteLine($"[{DateTime.Now}] [i] Получена команда: перейти в директорию");
-                            byte[] getDir_bytes = await net.getDataAsync(connClient);
+                            byte[] getDir_bytes = net.getData(connClient);
                             string getDir = Encoding.UTF8.GetString(getDir_bytes);
 
                             if (getDir == "/" || getDir == ".." || getDir.Contains(".."))
@@ -172,7 +171,7 @@ public class YFSserver
 
                         else if (cmd == "createdir")
                         {
-                            byte[] getDirName_bytes = await net.getDataAsync(connClient);
+                            byte[] getDirName_bytes = net.getData(connClient);
                             string getDirName = Encoding.UTF8.GetString(getDirName_bytes);
                             Directory.CreateDirectory(setDir + '/' + getDirName);
                             Console.WriteLine($"[{DateTime.Now}] [i] Создана директория: {getDirName}");
@@ -180,8 +179,9 @@ public class YFSserver
 
                         else if (cmd == "deletedir")
                         {
-                            byte[] getDirName_bytes = await net.getDataAsync(connClient);
+                            byte[] getDirName_bytes = net.getData(connClient);
                             string getDirName = Encoding.UTF8.GetString(getDirName_bytes);
+
                             if (getDirName == "deletedir:abort") 
                             {
                                 Console.WriteLine($"[{DateTime.Now}] [i] Удаление директории отменено");
@@ -202,8 +202,8 @@ public class YFSserver
 
                         else if (cmd == "fileinfo")
                         {
-                            string file = Encoding.UTF8.GetString(await net.getDataAsync(connClient));
-                            await io.getFileInfo(connClient, setDir + '/' + file);
+                            string file = Encoding.UTF8.GetString(net.getData(connClient));
+                            io.getFileInfo(connClient, setDir + '/' + file);
                         }
 
                         else if (cmd == "closeconn")

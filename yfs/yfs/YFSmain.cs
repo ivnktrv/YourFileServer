@@ -34,11 +34,11 @@ internal class YFSmain
         
         if (key.Key == ConsoleKey.NumPad1 || key.Key == ConsoleKey.D1)
         {
-            server.run();
+            server.Run();
         }
         else if (key.Key == ConsoleKey.NumPad2 || key.Key == ConsoleKey.D2)
         {
-            client.run();
+            client.Run();
         }
         else if (key.Key == ConsoleKey.NumPad3 || key.Key == ConsoleKey.D3)
         {

@@ -120,7 +120,7 @@ public class YFSsec
     /// </summary>
     /// <param name="path"></param>
     /// <returns></returns>
-    public async Task<string> checksumFileSHA256(string path)
+    public string checksumFileSHA256(string path)
     {
         using SHA256 sha256 = SHA256.Create();
         using FileStream fs = File.OpenRead(path);
