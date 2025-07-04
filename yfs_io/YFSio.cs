@@ -87,168 +87,142 @@ public class YFSio
     public void uploadFile(Socket __socket, string file, 
         string? folder = null, bool isServer = false, bool encryptFile = false)
     {
+        string path = folder == null ? file : $"{folder}/{file}";
+        string keyFile = "";
         try
         {
-            string path;
-            if (folder == null)
-                path = file;
-            else
-                path = $"{folder}/{file}";
-
-            string keyFile = "";
             if (!isServer && encryptFile)
             {
                 keyFile = sec.encryptFile(path);
                 file = file + ".enc";
                 path += ".enc";
             }
-
-            BinaryReader b = new(File.Open(path, FileMode.Open));
-            
-            if (isServer)
-                Console.WriteLine($"[{DateTime.Now}] [...] Подготовка к отправке файла: {file}");
-
-            // ----- ОТПРАВКА ИНФОРМАЦИИ О ФАЙЛЕ -----
-
-            long fLength = b.BaseStream.Length;
-            byte[] getFileName = Encoding.UTF8.GetBytes(Path.GetFileName(file));
-            byte[] getFileName_arrLength = { (byte)getFileName.Length };
-            byte[] getFileLength = BitConverter.GetBytes(fLength);
-            long packetCount = fLength / PACKET_SIZE;
-            int remainderBytes = (int)(fLength % PACKET_SIZE);
-            byte[] getPacketCount = BitConverter.GetBytes(packetCount);
-            byte[] getRemainderBytes = BitConverter.GetBytes(remainderBytes);
-            b.Close();
-            byte[] getFileChecksum = Encoding.UTF8.GetBytes(sec.checksumFileSHA256(path));
-
-            __socket.Send(getFileName_arrLength);
-            __socket.Send(getFileName);
-            __socket.Send(getFileLength);
-            __socket.Send(getFileChecksum);
-            __socket.Send(getPacketCount);
-            __socket.Send(getRemainderBytes);
-
-            // ------------------------------------------
-
-            if (isServer)
-                Console.WriteLine($"[{DateTime.Now}] [...] Файл отправляется: {file}");
-            
-            BinaryReader br = new(File.Open(path, FileMode.Open));
-            br.BaseStream.Position = 0;
-
-            //long c = 0;
             if (!isServer)
-                Console.WriteLine($"[INFO] Файл: {file}; Размер: {fLength} байт; Количество пакетов: {packetCount}; Остаток: {remainderBytes} байт\n");
-            
-            for (long i = 0; i <= packetCount; i++)
+                Console.WriteLine($"[DEBUG] Путь к файлу для отправки: {path}");
+            Console.WriteLine($"[{DateTime.Now}] [LOG] Старт отправки файла: {path}");
+            using (BinaryReader br = new(File.Open(path, FileMode.Open)))
             {
-                byte[] data = br.ReadBytes(PACKET_SIZE);
-                __socket.Send(data);
-
+                long fLength = br.BaseStream.Length;
+                byte[] getFileName = Encoding.UTF8.GetBytes(Path.GetFileName(file));
+                byte[] getFileName_arrLength = { (byte)getFileName.Length };
+                byte[] getFileLength = BitConverter.GetBytes(fLength);
+                long packetCount = fLength / PACKET_SIZE;
+                int remainderBytes = (int)(fLength % PACKET_SIZE);
+                byte[] getPacketCount = BitConverter.GetBytes(packetCount);
+                byte[] getRemainderBytes = BitConverter.GetBytes(remainderBytes);
+                byte[] getFileChecksum = Encoding.UTF8.GetBytes(sec.checksumFileSHA256(path));
+                Console.WriteLine($"[{DateTime.Now}] [LOG] Отправка метаданных файла: имя={file}, размер={fLength}, пакетов={packetCount}, остаток={remainderBytes}");
+                __socket.Send(getFileName_arrLength);
+                __socket.Send(getFileName);
+                __socket.Send(getFileLength);
+                __socket.Send(getFileChecksum);
+                __socket.Send(getPacketCount);
+                __socket.Send(getRemainderBytes);
                 if (!isServer)
-                    Console.WriteLine($"[{DateTime.Now}] [PACKET] NO:{i} отправлен");
-                /*if (!isServer && c % 8192 == 0)
+                    Console.WriteLine($"[INFO] Файл: {file}; Размер: {fLength} байт; Количество пакетов: {packetCount}; Остаток: {remainderBytes} байт\n");
+                for (long i = 0; i <= packetCount; i++)
                 {
-                    clearTerminal();
-                    Console.WriteLine($"[UPLOAD] {Path.GetFileName(path)} [{br.BaseStream.Position / 1024} kb / {br.BaseStream.Length / 1024} kb]");
-                }*/
-                //c += 128;
-            }
-            if (remainderBytes != 0)
-            {
-                br.BaseStream.Position = br.BaseStream.Length - remainderBytes;
-                byte[] sendRemainderBytes = br.ReadBytes(remainderBytes);
-                __socket.Send(sendRemainderBytes);
-
-                if (!isServer)
-                    Console.WriteLine($"[{DateTime.Now}] [PACKET] Остатки отправились ({remainderBytes} байт)");
-            }
-            br.Close();
-
-            Console.WriteLine(isServer ? $"[{DateTime.Now}] [...] Проверка контрольной суммы"
-            : "\n[...] Проверка контрольной суммы");
-
-            byte[] uploadedFileChecksum = new byte[64];
-            __socket.Receive(uploadedFileChecksum);
-
-            if (Encoding.UTF8.GetString(getFileChecksum) != Encoding.UTF8.GetString(uploadedFileChecksum))
-            {
-                if (!isServer)
+                    byte[] data = br.ReadBytes(PACKET_SIZE);
+                    __socket.Send(data);
+                    Console.WriteLine($"[{DateTime.Now}] [LOG] Отправлен пакет №{i} ({data.Length} байт)");
+                }
+                if (remainderBytes != 0)
                 {
-                    Console.Write($"""
-                    [!] Хеши не совпадают. Возможно, файл при отправки на сервер был повреждён.
-
-                    SHA-256:
-                        {Encoding.UTF8.GetString(getFileChecksum)} (отправленный файл) 
-                                        !=
-                        {Encoding.UTF8.GetString(uploadedFileChecksum)} (файл на сервере)
-            
-                    [1] Удалить файл  [2] Оставить
-                    
-                    => 
-                    """);
-                    ConsoleKeyInfo key = Console.ReadKey();
-
-                    if (key.Key == ConsoleKey.NumPad1 || key.Key == ConsoleKey.D1)
+                    br.BaseStream.Position = br.BaseStream.Length - remainderBytes;
+                    byte[] sendRemainderBytes = br.ReadBytes(remainderBytes);
+                    __socket.Send(sendRemainderBytes);
+                    Console.WriteLine($"[{DateTime.Now}] [LOG] Отправлены остаточные байты: {remainderBytes}");
+                }
+                Console.WriteLine(isServer ? $"[{DateTime.Now}] [...] Проверка контрольной суммы"
+                    : "\n[...] Проверка контрольной суммы");
+                byte[] uploadedFileChecksum = new byte[64];
+                __socket.Receive(uploadedFileChecksum);
+                Console.WriteLine($"[{DateTime.Now}] [LOG] Получена контрольная сумма с другой стороны: {Encoding.UTF8.GetString(uploadedFileChecksum)}");
+                if (Encoding.UTF8.GetString(getFileChecksum) != Encoding.UTF8.GetString(uploadedFileChecksum))
+                {
+                    if (!isServer)
                     {
-                        byte[] sendAnswer = { 1 };
-                        __socket.Send(sendAnswer);
-                    }
+                        Console.Write($"""
+                        [!] Хеши не совпадают. Возможно, файл при отправки на сервер был повреждён.
 
+                        SHA-256:
+                            {Encoding.UTF8.GetString(getFileChecksum)} (отправленный файл) 
+                                            !=
+                            {Encoding.UTF8.GetString(uploadedFileChecksum)} (файл на сервере)
+                
+                        [1] Удалить файл  [2] Оставить
+                        
+                        => 
+                        """);
+                        ConsoleKeyInfo key = Console.ReadKey();
+                        if (key.Key == ConsoleKey.NumPad1 || key.Key == ConsoleKey.D1)
+                        {
+                            byte[] sendAnswer = { 1 };
+                            __socket.Send(sendAnswer);
+                        }
+                        else
+                        {
+                            byte[] sendAnswer = { 0 };
+                            __socket.Send(sendAnswer);
+                        }
+                    }
                     else
                     {
-                        byte[] sendAnswer = { 0 };
-                        __socket.Send(sendAnswer);
+                        Console.WriteLine($"""
+                        [{DateTime.Now}] [-] Хеши не совпадают
+
+                        SHA-256:
+                            {Encoding.UTF8.GetString(getFileChecksum)} (отправленный файл)
+                                            !=
+                            {Encoding.UTF8.GetString(uploadedFileChecksum)} (файл на клиенте)
+                        
+                        """);
                     }
                 }
                 else
                 {
-                    Console.WriteLine($"""
-                    [{DateTime.Now}] [-] Хеши не совпадают
+                    if (isServer)
+                    {
+                        Console.WriteLine($"""
+                        [{DateTime.Now}] [+] Хеши совпадают
 
-                    SHA-256:
-                        {Encoding.UTF8.GetString(getFileChecksum)} (отправленный файл)
-                                        !=
-                        {Encoding.UTF8.GetString(uploadedFileChecksum)} (файл на клиенте)
-                    
-                    """);
+                        SHA-256:
+                            {Encoding.UTF8.GetString(getFileChecksum)} (отправленный файл)
+                                            =
+                            {Encoding.UTF8.GetString(uploadedFileChecksum)} (файл на клиенте)
+                        
+                        """);
+                    }
                 }
-            }
-
-            else
-            {
-                if (isServer)
+                if (!isServer && encryptFile)
                 {
-                    Console.WriteLine($"""
-                    [{DateTime.Now}] [+] Хеши совпадают
-
-                    SHA-256:
-                        {Encoding.UTF8.GetString(getFileChecksum)} (отправленный файл)
-                                        =
-                        {Encoding.UTF8.GetString(uploadedFileChecksum)} (файл на клиенте)
-                   
-                    """);
+                    writeKeytableFile(__socket, keyFile, file.Remove(0, 1));
+                    File.Delete(path);
                 }
-            }
-
-            if (!isServer && encryptFile)
-            {
-                writeKeytableFile(__socket, keyFile, file.Remove(0, 1));
-                File.Delete(path);
+                Console.WriteLine($"[{DateTime.Now}] [LOG] Отправка файла завершена: {path}");
             }
         }
         catch (FileNotFoundException)
         {
-            Console.WriteLine($"[{DateTime.Now}] [-] Файл не найден: {file}");
+            Console.WriteLine($"[{DateTime.Now}] [-] Файл не найден: {path}");
             byte[] getFileName_arrLengthZero = { 0 };
             __socket.Send(getFileName_arrLengthZero);
+            // Ждём ответ от сервера, чтобы не зависнуть
+            byte[] serverResponse = new byte[1];
+            __socket.Receive(serverResponse);
+            return;
         }
         catch (IOException)
         {
-            Console.WriteLine($"[{DateTime.Now}] [-] Некорректное имя файла: {file}. Отменяю отправку");
+            Console.WriteLine($"[{DateTime.Now}] [-] Некорректное имя файла: {path}. Отменяю отправку");
             byte[] getFileName_arrLengthZero = { 0 };
             __socket.Send(getFileName_arrLengthZero);
+            // Ждём ответ от сервера, чтобы не зависнуть
+            byte[] serverResponse = new byte[1];
+            __socket.Receive(serverResponse);
+            return;
         }
+        Console.ReadLine();
     }
 
     /// <summary>
@@ -262,60 +236,53 @@ public class YFSio
     {
         byte[] getFileNameArrayLength = new byte[1];
         __socket.ReceiveAsync(getFileNameArrayLength, SocketFlags.None);
-
         if (getFileNameArrayLength[0] == 0)
         {
             Console.WriteLine(isServer ? $"[{DateTime.Now}] [i] Клиент пытался отправить не существующий у себя файл" : "[-] Файл не найден");
+            // Отправляем клиенту байт-ответ, чтобы он не зависал
+            __socket.Send(new byte[] { 1 });
             return;
         }
-
         byte[] getFileName = new byte[getFileNameArrayLength[0]];
         __socket.Receive(getFileName, SocketFlags.None);
-
         byte[] getFileLength = new byte[8];
         __socket.Receive(getFileLength, SocketFlags.None);
-
         byte[] getFileChecksum = new byte[64];
         __socket.Receive(getFileChecksum, SocketFlags.None);
-
         byte[] getCountPacket = new byte[8];
         __socket.Receive(getCountPacket, SocketFlags.None);
-
         byte[] getReaminderBytes = new byte[4];
         __socket.Receive(getReaminderBytes, SocketFlags.None);
-
         string savePath = $"{saveFolder}/{Encoding.UTF8.GetString(getFileName)}";
         long fLength = BitConverter.ToInt64(getFileLength);
         long packetCount = BitConverter.ToInt64(getCountPacket);
         int remainderBytes = BitConverter.ToInt32(getReaminderBytes);
         string fileChecksum = Encoding.UTF8.GetString(getFileChecksum);
-
+        Console.WriteLine($"[{DateTime.Now}] [LOG] Старт загрузки файла: {savePath}");
         if (isServer)
             Console.WriteLine($"[{DateTime.Now}] [i] Принимаю файл: {Encoding.UTF8.GetString(getFileName)}");
-
         using (FileStream fs = new(savePath, FileMode.Create, FileAccess.Write, FileShare.None, PACKET_SIZE))
         {
-            // *********************************************
             for (long i = 0; i < packetCount; i++)
             {
                 byte[] receiveData = new byte[PACKET_SIZE];
                 __socket.Receive(receiveData, SocketFlags.None);
                 fs.Write(receiveData, 0, receiveData.Length);
+                Console.WriteLine($"[{DateTime.Now}] [LOG] Получен пакет №{i} ({receiveData.Length} байт)");
             }
-
             if (remainderBytes != 0)
             {
                 byte[] receiveRemainderBytes = new byte[remainderBytes];
                 __socket.Receive(receiveRemainderBytes, SocketFlags.None);
                 fs.Write(receiveRemainderBytes, 0, receiveRemainderBytes.Length);
+                Console.WriteLine($"[{DateTime.Now}] [LOG] Получены остаточные байты: {remainderBytes}");
             }
             fs.Close();
         }
-
         string downloadedFileChecksum = sec.checksumFileSHA256(savePath);
         byte[] downloadedFileChecksum_bytes = Encoding.UTF8.GetBytes(downloadedFileChecksum);
         __socket.Send(downloadedFileChecksum_bytes, SocketFlags.None);
-
+        Console.WriteLine($"[{DateTime.Now}] [LOG] Отправлена контрольная сумма: {downloadedFileChecksum}");
         Console.WriteLine(isServer ? $"[{DateTime.Now}] [...] Проверка контрольной суммы" : "\n[...] Проверка контрольной суммы");
         if (downloadedFileChecksum != fileChecksum)
         {
@@ -334,7 +301,6 @@ public class YFSio
                 => 
                 """);
                 ConsoleKeyInfo key = Console.ReadKey();
-
                 if (key.Key == ConsoleKey.NumPad1 || key.Key == ConsoleKey.D1)
                 {
                     File.Delete(savePath);
@@ -352,13 +318,10 @@ public class YFSio
                         {fileChecksum} (файл на клиенте)
                     
                     """);
-
                 byte[] wrongHash = Encoding.UTF8.GetBytes(downloadedFileChecksum);
                 __socket.Send(wrongHash, SocketFlags.None);
-
                 byte[] getAnswer = new byte[1];
                 __socket.Receive(getAnswer, SocketFlags.None);
-
                 if (getAnswer[0] == 1)
                 {
                     File.Delete(savePath);
@@ -383,6 +346,7 @@ public class YFSio
                 """);
             }
         }
+        Console.WriteLine($"[{DateTime.Now}] [LOG] Загрузка файла завершена: {savePath}");
         if (!isServer && Encoding.UTF8.GetString(getFileName)[^4..] == ".enc")
         {
             try
@@ -402,6 +366,7 @@ public class YFSio
                 }
             }
         }
+        Console.ReadLine();
     }
 
     /// <summary>
